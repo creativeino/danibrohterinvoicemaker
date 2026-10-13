@@ -156,7 +156,7 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
             {settings?.phone || "0333 1360441"}
             <span className="mx-1.5 text-neutral-300">·</span>
             <span className="font-semibold text-neutral-800">Email</span>{" "}
-            {settings?.email || "sales@danibrothers.com"}
+            {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
             <p>

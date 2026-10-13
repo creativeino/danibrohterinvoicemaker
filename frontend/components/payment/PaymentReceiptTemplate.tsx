@@ -111,7 +111,7 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
             {settings?.phone || "0333 1360441"}
             <span className="mx-1.5 text-neutral-300">·</span>
             <span className="font-semibold text-neutral-800">Email</span>{" "}
-            {settings?.email || "sales@danibrothers.com"}
+            {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
             <p>
@@ -338,7 +338,7 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
         className="mt-4 pt-2 text-center text-[9px] leading-[1.45] text-neutral-500"
         style={{ borderTop: "1px solid #ececec" }}
       >
-        {settings?.footerText || "This is a computer-generated payment receipt. For queries contact 0333 1360441 or sales@danibrothers.com"}
+        {settings?.footerText || "This is a computer-generated payment receipt. For queries contact 0333 1360441 or danibrothers99@gmail.com"}
       </footer>
     </div>
   );

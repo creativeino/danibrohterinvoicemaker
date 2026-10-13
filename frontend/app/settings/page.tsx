@@ -123,7 +123,7 @@ export default function SettingsPage() {
           setAddress(s.address || "Shop B-13 Sector Z-6 Gulshan e Maymar");
           setCity(s.city || "Sindh, Karachi");
           setPhone(s.phone || "0333 1360441");
-          setEmail(s.email || "sales@danibrothers.com");
+          setEmail(s.email || "danibrothers99@gmail.com");
           setWebsite(s.website || "www.danibrothers.com");
           setNtn(s.ntn || "");
           setStrn(s.strn || "");

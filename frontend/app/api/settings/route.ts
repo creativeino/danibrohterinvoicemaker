@@ -17,7 +17,7 @@ export async function GET() {
           address: "Shop B-13 Sector Z-6 Gulshan e Maymar",
           city: "Sindh, Karachi",
           phone: "0333 1360441",
-          email: "sales@danibrothers.com",
+          email: "danibrothers99@gmail.com",
           currency: "PKR",
         },
       });

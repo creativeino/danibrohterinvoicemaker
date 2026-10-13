@@ -141,7 +141,7 @@ model BusinessSettings {
   address               String   @default("Shop B-13 Sector Z-6 Gulshan e Maymar")
   city                  String   @default("Sindh, Karachi")
   phone                 String   @default("0333 1360441")
-  email                 String   @default("sales@danibrothers.com")
+  email                 String   @default("danibrothers99@gmail.com")
   website               String?  @default("www.danibrothers.com")
   ntn                   String?
   strn                  String?

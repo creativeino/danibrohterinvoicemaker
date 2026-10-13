@@ -16,7 +16,7 @@ async function main() {
       address: "Shop B-13 Sector Z-6 Gulshan e Maymar",
       city: "Sindh, Karachi",
       phone: "0333 1360441",
-      email: "sales@danibrothers.com",
+      email: "danibrothers99@gmail.com",
       website: "www.danibrothers.com",
       invoicePrefix: "INV-",
       startingInvoiceNumber: 1,
@@ -27,7 +27,7 @@ async function main() {
       currency: "PKR",
       defaultPaymentTerms: "50% advance with order, balance upon completion of installation & commissioning.",
       defaultNotes: "Thank you for choosing Dani Brothers. All equipment carries 1 Year standard manufacturer warranty. Physical damages/burns not covered.",
-      footerText: "This is a computer-generated invoice. For queries contact 0333 1360441 or sales@danibrothers.com",
+      footerText: "This is a computer-generated invoice. For queries contact 0333 1360441 or danibrothers99@gmail.com",
     },
   });
   console.log("Settings seeded:", settings.businessName);
