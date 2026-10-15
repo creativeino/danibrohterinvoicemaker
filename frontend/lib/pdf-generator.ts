@@ -16,8 +16,12 @@ async function buildInvoiceJsPDF(elementId: string): Promise<jsPDF> {
 
   const holder = document.createElement("div");
   holder.style.cssText =
-    "position:fixed; left:-20000px; top:0; width:max-content; background:#ffffff; pointer-events:none;";
+    "position:fixed; left:-20000px; top:0; width:210mm; background:#ffffff; pointer-events:none; z-index:-9999;";
   const clone = element.cloneNode(true) as HTMLElement;
+  // Reset any zoom styling on the clone so html2canvas renders at full 100% A4 size
+  clone.style.zoom = "1";
+  clone.style.transform = "none";
+  clone.style.margin = "0";
   holder.appendChild(clone);
   document.body.appendChild(holder);
 
@@ -28,8 +32,8 @@ async function buildInvoiceJsPDF(elementId: string): Promise<jsPDF> {
       useCORS: true,
       logging: false,
       backgroundColor: "#ffffff",
-      windowWidth: Math.max(window.innerWidth, 1200),
-      windowHeight: Math.ceil(clone.getBoundingClientRect().height) + 100,
+      width: clone.scrollWidth || 794,
+      windowWidth: 1200,
     });
   } finally {
     holder.remove();
