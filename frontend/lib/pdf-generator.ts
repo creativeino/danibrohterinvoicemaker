@@ -1,24 +1,19 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export async function generateInvoicePDF(elementId: string, filename: string = "Invoice.pdf") {
+async function buildInvoiceJsPDF(elementId: string): Promise<jsPDF> {
   const element = document.getElementById(elementId);
   if (!element) {
     throw new Error(`Element with id ${elementId} not found.`);
   }
 
-  // Make sure webfonts are fully loaded before rasterizing, otherwise the
-  // PDF can come out with fallback fonts (or blank text while loading).
+  // Make sure webfonts are fully loaded before rasterizing
   try {
     await document.fonts.ready;
   } catch {
     // Older browsers without the CSS Font Loading API — render anyway.
   }
 
-  // Render an offscreen clone instead of the live element. Ancestors
-  // (sidebar layout, scroll containers, flex shrink) can otherwise resize or
-  // clip the page while html2canvas builds its capture iframe, which squeezes
-  // the invoice into a distorted image spanning extra PDF pages.
   const holder = document.createElement("div");
   holder.style.cssText =
     "position:fixed; left:-20000px; top:0; width:max-content; background:#ffffff; pointer-events:none;";
@@ -59,7 +54,6 @@ export async function generateInvoicePDF(elementId: string, filename: string = "
   heightLeft -= pdfHeight;
 
   // Multi-page automatic continuation if height exceeds 1 page.
-  // (> 1px guard avoids a trailing blank page from float rounding.)
   while (heightLeft > 1) {
     position = -(page * pdfHeight);
     pdf.addPage();
@@ -68,42 +62,46 @@ export async function generateInvoicePDF(elementId: string, filename: string = "
     page++;
   }
 
-  // Save PDF
+  return pdf;
+}
+
+export async function generateInvoicePDF(elementId: string, filename: string = "Invoice.pdf") {
+  const pdf = await buildInvoiceJsPDF(elementId);
   pdf.save(filename);
 }
 
-export function printInvoiceElement(elementId: string, title: string = "Print Invoice") {
-  const element = document.getElementById(elementId);
-  if (!element) return;
+export async function printInvoiceElement(elementId: string, _title: string = "Print Invoice") {
+  try {
+    const pdf = await buildInvoiceJsPDF(elementId);
+    // autoPrint embeds the print dialog action directly into the PDF
+    pdf.autoPrint();
+    const rawUrl = pdf.output("bloburl");
+    const blobUrl = typeof rawUrl === "string" ? rawUrl : String(rawUrl);
 
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
+    // Open the clean PDF viewer in a new tab without popup blocker conflicts
+    const printTab = window.open(blobUrl, "_blank");
+    if (!printTab) {
+      // If browser blocked new tab, open in a hidden iframe and print
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        }, 300);
+      };
+    }
+  } catch (err) {
+    console.error("Print error:", err);
+    // Fallback to standard window.print() if canvas creation encounters issue
     window.print();
-    return;
   }
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>${title}</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          @page { size: A4; margin: 10mm; }
-          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        </style>
-      </head>
-      <body class="bg-white p-4">
-        ${element.outerHTML}
-        <script>
-          window.onload = function() {
-            window.focus();
-            window.print();
-            window.close();
-          };
-        </script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
 }
+
