@@ -75,37 +75,62 @@ export async function generateInvoicePDF(elementId: string, filename: string = "
 }
 
 export async function printInvoiceElement(elementId: string, _title: string = "Print Invoice") {
-  try {
-    const pdf = await buildInvoiceJsPDF(elementId);
-    // autoPrint embeds the print dialog action directly into the PDF
-    pdf.autoPrint();
-    const rawUrl = pdf.output("bloburl");
-    const blobUrl = typeof rawUrl === "string" ? rawUrl : String(rawUrl);
-
-    // Open the clean PDF viewer in a new tab without popup blocker conflicts
-    const printTab = window.open(blobUrl, "_blank");
-    if (!printTab) {
-      // If browser blocked new tab, open in a hidden iframe and print
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      iframe.src = blobUrl;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        setTimeout(() => {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        }, 300);
-      };
-    }
-  } catch (err) {
-    console.error("Print error:", err);
-    // Fallback to standard window.print() if canvas creation encounters issue
+  const element = document.getElementById(elementId);
+  if (!element) {
     window.print();
+    return;
   }
+
+  // Open print window with complete cloned HTML and stylesheets
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const styles = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+    .map((s) => s.outerHTML)
+    .join("\n");
+
+  printWindow.document.open();
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${_title}</title>
+        ${styles}
+        <style>
+          @page { size: A4 portrait; margin: 0; }
+          body { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+          }
+          #${elementId} {
+            margin: 0 auto !important;
+            box-shadow: none !important;
+          }
+        </style>
+      </head>
+      <body>
+        <div style="display:flex; justify-content:center; width:100%; background:#fff;">
+          ${element.outerHTML}
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+
+  // Print after short delay to allow images (logo) and styles to render
+  setTimeout(() => {
+    try {
+      printWindow.focus();
+      printWindow.print();
+    } catch {
+      window.print();
+    }
+  }, 400);
 }
 
