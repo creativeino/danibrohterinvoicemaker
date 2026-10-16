@@ -72,30 +72,17 @@ interface InvoicePDFTemplateProps {
 // Shared card chrome for the modern layout: soft fill, hairline border,
 // rounded corners. Inline styles only — html2canvas-safe colors (plain hex,
 // no Tailwind lab()/color-mix() vars, no opacity modifiers).
+// Shared card chrome for the modern layout: soft fill, hairline border,
+// rounded corners. Inline styles only — html2canvas-safe colors (plain hex,
+// no Tailwind lab()/color-mix() vars, no opacity modifiers).
 const cardStyle: React.CSSProperties = {
-  backgroundColor: "#fafafa",
-  border: "1px solid #e5e5e5",
-  borderRadius: "8px",
+  backgroundColor: "#fcfdfe",
+  border: "1px solid #e2e8f0",
+  borderRadius: "10px",
 };
 
-// Small uppercase eyebrow label used at the top of every card.
-const labelCls = "text-[8.5px] font-bold uppercase tracking-[0.16em] mb-1";
-
-// Status pill — tinted fill, fully rounded, no hard borders.
-function statusBadge(status?: string) {
-  switch (status) {
-    case "Paid":
-      return "bg-emerald-100 text-emerald-800";
-    case "Partially Paid":
-      return "bg-amber-100 text-amber-800";
-    case "Overdue":
-      return "bg-rose-50 text-rose-700";
-    case "Cancelled":
-      return "bg-rose-50 text-rose-700";
-    default:
-      return "bg-neutral-100 text-neutral-700";
-  }
-}
+// Small uppercase eyebrow label used at the top of cards & sections.
+const labelCls = "text-[8px] font-extrabold uppercase tracking-[0.18em] mb-1.5";
 
 export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
   invoice,
@@ -103,10 +90,10 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
   id = "invoice-pdf-template",
 }) => {
   const currency = settings?.currency || "PKR";
+  const isPaid = (invoice.balance <= 0 || invoice.status === "Paid");
+  const isPartial = (invoice.paidAmount ?? 0) > 0 && !isPaid;
 
   // Group line items by section if present, maintaining order.
-  // Serial numbers are assigned as a single running counter so numbering
-  // stays continuous across section breaks.
   const groupedSections: {
     sectionTitle: string | null;
     items: { item: InvoiceItem; seq: number }[];
@@ -138,242 +125,293 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
   return (
     <div
       id={id}
-      className="bg-white text-black font-sans"
+      className="bg-white text-slate-900 font-sans"
       style={{
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
         backgroundColor: "#ffffff",
-        color: "#171717",
-        padding: "7mm 10mm",
-        // Slim branded top edge — logo blue (#2041ce) as inline hex so
-        // html2canvas can rasterize it (no Tailwind lab()/color-mix vars).
-        borderTop: "3mm solid #2041ce",
+        color: "#0f172a",
+        padding: "8mm 11mm",
+        borderTop: "4mm solid #1e40af",
         display: "flex",
         flexDirection: "column",
-        lineHeight: 1.35,
+        lineHeight: 1.4,
+        fontFeatureSettings: '"cv02", "cv03", "cv04", "cv11"',
       }}
     >
-      {/* 1. Header: logo left, business contact right */}
+      {/* 1. Top Header: Company logo & brand on left, verified company details on right */}
       <header
-        className="flex items-start justify-between gap-6 pb-2"
-        style={{ borderBottom: "1px solid #e5e5e5" }}
+        className="flex items-start justify-between gap-6 pb-3"
+        style={{ borderBottom: "1.5px solid #f1f5f9" }}
       >
-        <div>
+        <div className="flex flex-col items-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={settings?.logo || "/logodanibro.svg"}
             alt={settings?.businessName || "Company logo"}
-            style={{ height: "42px", width: "auto", objectFit: "contain" }}
+            style={{ maxHeight: "46px", width: "auto", objectFit: "contain" }}
           />
+          <div className="mt-1 flex items-center gap-1.5">
+            <span
+              className="inline-block px-1.5 py-0.5 rounded text-[7.5px] font-bold tracking-[0.14em] uppercase"
+              style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
+            >
+              Tax Invoice &amp; Billing
+            </span>
+            {(settings?.ntn || settings?.strn) && (
+              <span className="text-[8px] font-medium text-slate-400">
+                {settings.ntn && `NTN: ${settings.ntn}`}
+                {settings.ntn && settings.strn && " · "}
+                {settings.strn && `STRN: ${settings.strn}`}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="text-right text-[9.5px] text-neutral-600 leading-[1.45]">
-          <p className="font-bold text-neutral-900 text-[12px]">
+        <div className="text-right text-[9px] text-slate-500 leading-[1.5]">
+          <p className="font-extrabold text-slate-900 text-[13px] tracking-tight">
             {settings?.businessName || "DANI BROTHERS"}
           </p>
-          <p>
+          <p className="text-slate-600 font-medium">
             {settings?.address || "Shop B-13 Sector Z-6 Gulshan e Maymar"},{" "}
             {settings?.city || "Sindh, Karachi"}
           </p>
-          <p>
-            <span className="font-semibold text-neutral-800">Phone</span>{" "}
+          <p className="mt-0.5">
+            <span className="font-semibold text-slate-700">Tel:</span>{" "}
             {settings?.phone || "0333 1360441"}
-            <span className="mx-1.5 text-neutral-300">·</span>
-            <span className="font-semibold text-neutral-800">Email</span>{" "}
+            <span className="mx-1 text-slate-300">|</span>
+            <span className="font-semibold text-slate-700">Email:</span>{" "}
             {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
             <p>
-              <span className="font-semibold text-neutral-800">Web</span>{" "}
+              <span className="font-semibold text-slate-700">Web:</span>{" "}
               {settings.website}
-            </p>
-          )}
-          {(settings?.ntn || settings?.strn) && (
-            <p className="font-semibold text-neutral-700">
-              {settings.ntn && <span>NTN: {settings.ntn} </span>}
-              {settings.strn && <span>· STRN: {settings.strn}</span>}
             </p>
           )}
         </div>
       </header>
 
-      {/* 2. Title band: INVOICE label + invoice number chip */}
-      <div className="flex items-end justify-between gap-6 mt-2.5">
+      {/* 2. Hero Section: Document title, Status Badge & High-Contrast Number Chip */}
+      <div className="flex items-center justify-between gap-4 mt-3 pb-1">
         <div>
-          <h1
-            className="font-black uppercase text-neutral-900"
-            style={{ fontSize: "24px", letterSpacing: "0.1em", lineHeight: 1 }}
-          >
-            Invoice
-          </h1>
-          <div
-            aria-hidden
-            style={{
-              width: "40px",
-              height: "3px",
-              backgroundColor: "#2041ce",
-              borderRadius: "2px",
-              margin: "6px 0 4px",
-            }}
-          />
-          <p className="text-[9px] text-neutral-400 uppercase tracking-[0.14em] font-semibold">
-            Original for Recipient
+          <div className="flex items-center gap-2.5">
+            <h1
+              className="font-black uppercase text-slate-900 tracking-[0.06em]"
+              style={{ fontSize: "23px", lineHeight: 1 }}
+            >
+              Invoice
+            </h1>
+            {/* Status Stamp / Badge */}
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.12em]"
+              style={{
+                backgroundColor: isPaid
+                  ? "#dcfce7"
+                  : isPartial
+                  ? "#fef3c7"
+                  : invoice.status === "Overdue" || invoice.status === "Cancelled"
+                  ? "#fee2e2"
+                  : "#eff6ff",
+                color: isPaid
+                  ? "#15803d"
+                  : isPartial
+                  ? "#b45309"
+                  : invoice.status === "Overdue" || invoice.status === "Cancelled"
+                  ? "#b91c1c"
+                  : "#1d4ed8",
+                border: `1px solid ${
+                  isPaid
+                    ? "#86efac"
+                    : isPartial
+                    ? "#fcd34d"
+                    : invoice.status === "Overdue" || invoice.status === "Cancelled"
+                    ? "#fca5a5"
+                    : "#bfdbfe"
+                }`,
+              }}
+            >
+              ● {invoice.status || (isPaid ? "Paid" : "Issued")}
+            </span>
+          </div>
+          <p className="text-[8.5px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-1">
+            Original Commercial Copy
           </p>
         </div>
 
+        {/* Invoice Number & Date Badge */}
         <div
-          className="text-right px-3.5 py-1.5"
-          style={{ backgroundColor: "#eef2ff", borderRadius: "8px" }}
+          className="flex items-center divide-x divide-slate-200 px-3.5 py-2"
+          style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "10px",
+          }}
         >
-          <p
-            className="text-[8.5px] uppercase tracking-[0.18em] font-bold"
-            style={{ color: "#2041ce" }}
-          >
-            Invoice Number
-          </p>
-          <p className="font-mono font-black text-neutral-900 text-[17px] leading-tight mt-0.5">
-            {invoice.invoiceNumber || "INV-NEW"}
-          </p>
+          <div className="pr-3 text-right">
+            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+              Invoice No
+            </p>
+            <p className="font-mono font-black text-slate-900 text-[15px] leading-tight mt-0.5 tracking-tight">
+              {invoice.invoiceNumber || "INV-NEW"}
+            </p>
+          </div>
+          <div className="pl-3 text-left">
+            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+              Issue Date
+            </p>
+            <p className="font-semibold text-slate-800 text-[11px] leading-tight mt-0.5">
+              {formatDate(invoice.invoiceDate)}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* 3. Customer card & invoice details card */}
-      <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-        <div style={cardStyle} className="px-3 py-2.5">
-          <p className={labelCls} style={{ color: "#2041ce" }}>
-            Billed To
-          </p>
-          <p className="text-[12.5px] font-bold text-neutral-900">
-            {invoice.customer?.name || "WALK-IN CUSTOMER"}
-          </p>
-          {invoice.customer?.companyName && (
-            <p className="text-[10.5px] font-semibold text-neutral-700">
-              {invoice.customer.companyName}
+      {/* 3. Customer & Meta Details Grid */}
+      <div className="grid grid-cols-2 gap-3 mt-2.5">
+        {/* Customer Card */}
+        <div style={cardStyle} className="p-3 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className={labelCls} style={{ color: "#1e40af" }}>
+                Billed To
+              </p>
+              {invoice.customer?.customerCode && (
+                <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  {invoice.customer.customerCode}
+                </span>
+              )}
+            </div>
+            <p className="text-[13px] font-extrabold text-slate-900 leading-snug">
+              {invoice.customer?.name || "WALK-IN CUSTOMER"}
             </p>
-          )}
-          <p className="text-[10px] text-neutral-600 mt-0.5 leading-[1.45]">
-            {invoice.customer?.address || "N/A"}
-            {invoice.customer?.city ? `, ${invoice.customer.city}` : ""}
-          </p>
-          <p className="text-[10px] text-neutral-800 font-medium">
-            {invoice.customer?.phone || "N/A"}
-          </p>
-          {invoice.customer?.email && (
-            <p className="text-[10px] text-neutral-600">
-              {invoice.customer.email}
+            {invoice.customer?.companyName && (
+              <p className="text-[10.5px] font-bold text-slate-700 mt-0.5">
+                {invoice.customer.companyName}
+              </p>
+            )}
+            <p className="text-[9.5px] text-slate-500 mt-1 leading-[1.45]">
+              {invoice.customer?.address || "Address: Walk-in / Direct Sales"}
+              {invoice.customer?.city ? `, ${invoice.customer.city}` : ""}
             </p>
-          )}
+          </div>
+
+          <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[9.5px] text-slate-700">
+            {invoice.customer?.phone && (
+              <span>
+                <strong className="font-semibold text-slate-900">Phone:</strong> {invoice.customer.phone}
+              </span>
+            )}
+            {invoice.customer?.email && (
+              <span>
+                <strong className="font-semibold text-slate-900">Email:</strong> {invoice.customer.email}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div style={cardStyle} className="px-3 py-2.5">
-          <p className={labelCls} style={{ color: "#2041ce" }}>
+        {/* Invoice Meta Card */}
+        <div style={cardStyle} className="p-3">
+          <p className={labelCls} style={{ color: "#1e40af" }}>
             Invoice Details
           </p>
 
-          <div className="text-[10px]">
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Invoice Date</span>
-              <span className="font-semibold text-neutral-900">
+          <div className="text-[9.5px] divide-y divide-slate-100 mt-1">
+            <div className="flex justify-between py-1">
+              <span className="text-slate-400 font-medium">Invoice Date</span>
+              <span className="font-bold text-slate-800">
                 {formatDate(invoice.invoiceDate)}
               </span>
             </div>
 
             {invoice.dueDate && (
-              <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-                <span className="text-neutral-500 font-medium">Due Date</span>
-                <span className="font-semibold text-neutral-900">
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400 font-medium">Payment Due Date</span>
+                <span className="font-bold text-slate-800">
                   {formatDate(invoice.dueDate)}
                 </span>
               </div>
             )}
 
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Client ID</span>
-              <span className="font-semibold text-neutral-800">
-                {invoice.customer?.customerCode || "—"}
-              </span>
-            </div>
-
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Quotation ID</span>
-              <span className="font-semibold text-neutral-800">
-                {hasQuotation ? invoice.quotationNumber || invoice.quotationId : "—"}
-              </span>
-            </div>
+            {hasQuotation && (
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400 font-medium">Quotation Reference</span>
+                <span className="font-bold text-indigo-700 font-mono">
+                  {invoice.quotationNumber || invoice.quotationId}
+                </span>
+              </div>
+            )}
 
             {invoice.referenceNumber && (
-              <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-                <span className="text-neutral-500 font-medium">Reference</span>
-                <span className="font-semibold text-neutral-800">
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400 font-medium">Purchase Order / Ref</span>
+                <span className="font-bold text-slate-800 font-mono">
                   {invoice.referenceNumber}
                 </span>
               </div>
             )}
 
-            <div className="flex justify-between items-center gap-3 py-[3px]">
-              <span className="text-neutral-500 font-medium">Payment Status</span>
-              <span
-                className={`inline-block px-2.5 py-[2.5px] text-[8.5px] font-bold uppercase tracking-[0.08em] rounded-full ${statusBadge(
-                  invoice.status
-                )}`}
-              >
-                {invoice.status || "Issued"}
+            <div className="flex justify-between items-center py-1">
+              <span className="text-slate-400 font-medium">Payment Method / Status</span>
+              <span className="font-bold text-slate-800">
+                {isPaid ? "Fully Settled" : isPartial ? "Partially Paid" : "Unpaid / Pending"}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 4. Line items table — rounded frame, brand header */}
+      {/* 4. Line items table with refined executive design */}
       <div
-        className="mt-2.5"
-        style={{ border: "1px solid #e5e5e5", borderRadius: "8px", overflow: "hidden" }}
+        className="mt-3"
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "10px",
+          overflow: "hidden",
+        }}
       >
-        <table
-          className="w-full text-left border-collapse"
-          style={{ tableLayout: "fixed" }}
-        >
+        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr
-              className="text-white text-[9px] uppercase tracking-[0.09em]"
-              style={{ backgroundColor: "#2041ce" }}
+              className="text-white text-[8.5px] uppercase tracking-[0.12em]"
+              style={{ backgroundColor: "#1e293b" }}
             >
               <th
-                className="py-[6px] px-2 text-center font-bold"
-                style={{ width: "14mm" }}
+                className="py-2 px-2.5 text-center font-extrabold"
+                style={{ width: "12mm" }}
               >
-                S.No
+                #
               </th>
               <th
-                className="py-[6px] px-2 text-center font-bold"
+                className="py-2 px-2.5 text-center font-extrabold"
                 style={{ width: "15mm" }}
               >
                 Qty
               </th>
-              <th className="py-[6px] px-2 font-bold">Description</th>
+              <th className="py-2 px-3 font-extrabold">Item Description</th>
               <th
-                className="py-[6px] px-2 text-right font-bold"
-                style={{ width: "30mm" }}
+                className="py-2 px-3 text-right font-extrabold"
+                style={{ width: "32mm" }}
               >
                 Rate ({currency})
               </th>
               <th
-                className="py-[6px] px-2 text-right font-bold"
-                style={{ width: "34mm" }}
+                className="py-2 px-3 text-right font-extrabold"
+                style={{ width: "36mm" }}
               >
                 Amount ({currency})
               </th>
             </tr>
           </thead>
-          <tbody className="text-[10.5px]">
+          <tbody className="text-[10px]">
             {groupedSections.length === 0 && (
               <tr>
                 <td
                   colSpan={5}
-                  className="py-4 text-center text-neutral-500 border-b border-neutral-200"
+                  className="py-6 text-center text-slate-400 border-b border-slate-100"
                 >
-                  No line items
+                  No line items listed
                 </td>
               </tr>
             )}
@@ -381,15 +419,17 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             {groupedSections.map((group, gIdx) => (
               <React.Fragment key={gIdx}>
                 {group.sectionTitle && (
-                  <tr style={{ backgroundColor: "#eef2ff" }}>
+                  <tr style={{ backgroundColor: "#f8fafc" }}>
                     <td
                       colSpan={5}
-                      className="py-[4.5px] px-3 font-bold uppercase tracking-[0.1em] text-[9px]"
+                      className="py-1 px-3 font-extrabold uppercase tracking-[0.14em] text-[8.5px]"
                       style={{
-                        borderBottom: "1px solid #c7d2fe",
-                        color: "#2041ce",
+                        borderBottom: "1px solid #e2e8f0",
+                        borderTop: gIdx > 0 ? "1px solid #e2e8f0" : "none",
+                        color: "#1e40af",
                       }}
                     >
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 mr-1.5 align-middle" />
                       {group.sectionTitle}
                     </td>
                   </tr>
@@ -397,36 +437,38 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 {group.items.map(({ item, seq }, iIdx) => (
                   <tr
                     key={item.id || `${gIdx}-${iIdx}`}
-                    className={iIdx % 2 === 1 ? "bg-neutral-50" : "bg-white"}
-                    style={{ borderBottom: "1px solid #e5e5e5" }}
+                    style={{
+                      backgroundColor: iIdx % 2 === 1 ? "#fafcfd" : "#ffffff",
+                      borderBottom: "1px solid #f1f5f9",
+                    }}
                   >
-                    <td className="py-[5px] px-2 text-center text-neutral-400 font-semibold align-top">
-                      {seq}
+                    <td className="py-2 px-2.5 text-center text-slate-400 font-semibold align-top text-[9.5px]">
+                      {String(seq).padStart(2, "0")}
                     </td>
                     <td
-                      className="py-[5px] px-2 text-center font-bold text-neutral-900 align-top"
+                      className="py-2 px-2.5 text-center font-extrabold text-slate-900 align-top"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.quantity}
                     </td>
-                    <td className="py-[5px] px-2 text-neutral-800 align-top pr-3">
-                      <span className="font-semibold text-neutral-900">
+                    <td className="py-2 px-3 text-slate-800 align-top pr-4">
+                      <p className="font-bold text-slate-900 leading-snug">
                         {item.description.split("\n")[0]}
-                      </span>
+                      </p>
                       {item.description.includes("\n") && (
-                        <span className="block text-[9.5px] text-neutral-500 mt-0.5 whitespace-pre-wrap">
+                        <p className="text-[9px] text-slate-500 mt-0.5 whitespace-pre-wrap leading-normal font-normal">
                           {item.description.split("\n").slice(1).join("\n")}
-                        </span>
+                        </p>
                       )}
                     </td>
                     <td
-                      className="py-[5px] px-2 text-right font-medium text-neutral-600 align-top"
+                      className="py-2 px-3 text-right font-medium text-slate-600 align-top"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.rate.toLocaleString("en-PK")}
                     </td>
                     <td
-                      className="py-[5px] px-2 text-right font-semibold text-neutral-900 align-top"
+                      className="py-2 px-3 text-right font-bold text-slate-900 align-top"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.amount.toLocaleString("en-PK")}
@@ -439,91 +481,111 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
         </table>
       </div>
 
-      {/* 5. Notes & signatures (left) + totals (right) */}
-      <div className="grid grid-cols-12 gap-2.5 mt-2.5 flex-1">
-        <div className="col-span-7 flex flex-col text-[10.5px]">
-          <div style={cardStyle} className="px-3 py-2.5">
-            <p className={labelCls} style={{ color: "#2041ce" }}>
-              Terms &amp; Conditions / Notes
-            </p>
-            <p className="text-neutral-600 text-[10px] leading-[1.5] whitespace-pre-wrap">
-              {invoice.notes ||
-                settings?.defaultNotes ||
-                "Thank you for choosing Dani Brothers. All equipment carries 1 Year standard manufacturer warranty. Physical damages/burns are not covered."}
-            </p>
+      {/* 5. Bottom Split: Terms & Signatures (Left) + Totals Summary (Right) */}
+      <div className="grid grid-cols-12 gap-3 mt-3 flex-1 items-start">
+        {/* Left Column: Notes & Trail */}
+        <div className="col-span-7 flex flex-col justify-between h-full">
+          <div>
+            <div style={cardStyle} className="p-3">
+              <p className={labelCls} style={{ color: "#1e40af" }}>
+                Terms &amp; Important Notes
+              </p>
+              <p className="text-slate-600 text-[9.5px] leading-[1.5] whitespace-pre-wrap">
+                {invoice.notes ||
+                  settings?.defaultNotes ||
+                  "Thank you for choosing Dani Brothers. All equipment carries 1 Year standard manufacturer warranty. Physical damage, electrical surge or burns are strictly void."}
+              </p>
+            </div>
+
+            {/* Payment History Log (if payments exist) */}
+            {invoice.payments && invoice.payments.length > 0 && (
+              <div
+                className="p-2.5 mt-2 rounded-lg"
+                style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}
+              >
+                <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-200">
+                  <span className="text-[8px] font-extrabold uppercase tracking-[0.16em] text-emerald-800">
+                    Payment Receipts ({invoice.payments.length})
+                  </span>
+                  <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest">
+                    Settlement Trail
+                  </span>
+                </div>
+                <div className="space-y-1 text-[8.5px]">
+                  {invoice.payments.map((p, pIdx) => (
+                    <div
+                      key={p.id || pIdx}
+                      className="flex justify-between items-center text-slate-600"
+                    >
+                      <span>
+                        <strong className="font-mono text-slate-800 font-bold">{p.paymentNumber}</strong>
+                        {" · "}
+                        {formatDate(p.paymentDate)}
+                        {" ("}
+                        {p.paymentMethod}
+                        {p.reference ? ` - ${p.reference}` : ""}
+                        {")"}
+                      </span>
+                      <span className="font-extrabold text-emerald-700 font-mono">
+                        {formatCurrency(p.amount, currency)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Payment History Log (if payments exist) */}
-          {invoice.payments && invoice.payments.length > 0 && (
-            <div style={cardStyle} className="px-3 py-2 mt-2">
-              <div className="flex items-center justify-between mb-1">
-                <p className={labelCls} style={{ color: "#059669" }}>
-                  Payment Receipts ({invoice.payments.length})
-                </p>
-                <span className="text-[8.5px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Settlement Trail
-                </span>
-              </div>
-              <div className="space-y-1 text-[9px]">
-                {invoice.payments.map((p, pIdx) => (
-                  <div
-                    key={p.id || pIdx}
-                    className="flex justify-between items-center text-neutral-600 border-b border-neutral-100 pb-0.5 last:border-0"
-                  >
-                    <span>
-                      <strong className="font-mono text-neutral-800">{p.paymentNumber}</strong>
-                      {" · "}
-                      {formatDate(p.paymentDate)}
-                      {" ("}
-                      {p.paymentMethod}
-                      {p.reference ? ` - ${p.reference}` : ""}
-                      {")"}
-                    </span>
-                    <span className="font-bold text-emerald-700 font-mono">
-                      {formatCurrency(p.amount, currency)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex-1" />
-
-          <div className="pt-2">
+          {/* Dual Signatures */}
+          <div className="pt-6 mt-auto">
             <div className="flex justify-between items-end gap-6">
-              <span
-                className="w-40 text-center text-neutral-500 font-semibold text-[9px] uppercase tracking-[0.14em] pt-1.5"
-                style={{ borderTop: "1px solid #d4d4d4" }}
-              >
-                Authorized Signature
-              </span>
-              <span
-                className="w-40 text-center text-neutral-500 font-semibold text-[9px] uppercase tracking-[0.14em] pt-1.5"
-                style={{ borderTop: "1px solid #d4d4d4" }}
-              >
-                Customer Signature
-              </span>
+              <div className="w-40 text-center flex flex-col items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={settings?.logo || "/logodanibro.svg"}
+                  alt="Company stamp/logo"
+                  style={{ maxHeight: "24px", width: "auto", objectFit: "contain", marginBottom: "4px" }}
+                />
+                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1.5">
+                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                    Dani Brothers
+                  </p>
+                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                    Authorized Signatory
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-36 text-center">
+                <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1.5">
+                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                    Received By
+                  </p>
+                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                    Customer Signature
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="col-span-5 text-[10.5px]">
+        {/* Right Column: Financial Calculations Card */}
+        <div className="col-span-5">
           <div
             style={{
-              border: "1px solid #e5e5e5",
-              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
               overflow: "hidden",
+              backgroundColor: "#ffffff",
             }}
           >
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse text-[10px]">
               <tbody>
-                <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
-                  <td className="py-[5px] px-3 text-neutral-500 font-medium">
-                    Subtotal
-                  </td>
+                <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td className="py-1.5 px-3 text-slate-500 font-medium">Subtotal</td>
                   <td
-                    className="py-[5px] px-3 text-right font-semibold text-neutral-900"
+                    className="py-1.5 px-3 text-right font-bold text-slate-800"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(invoice.subtotal, currency)}
@@ -531,10 +593,10 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 </tr>
 
                 {invoice.discount > 0 && (
-                  <tr className="text-rose-700" style={{ borderBottom: "1px solid #e5e5e5" }}>
-                    <td className="py-[5px] px-3 font-medium">Discount</td>
+                  <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#fff1f2" }}>
+                    <td className="py-1.5 px-3 text-rose-700 font-semibold">Special Discount</td>
                     <td
-                      className="py-[5px] px-3 text-right font-semibold"
+                      className="py-1.5 px-3 text-right font-extrabold text-rose-700"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency(invoice.discount, currency)}
@@ -543,12 +605,10 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 )}
 
                 {(invoice.additionalCharges ?? 0) > 0 && (
-                  <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
-                    <td className="py-[5px] px-3 text-neutral-500 font-medium">
-                      Adjustment / Charges
-                    </td>
+                  <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td className="py-1.5 px-3 text-slate-500 font-medium">Charges / Adjustment</td>
                     <td
-                      className="py-[5px] px-3 text-right font-medium text-neutral-900"
+                      className="py-1.5 px-3 text-right font-semibold text-slate-800"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       + {formatCurrency(invoice.additionalCharges || 0, currency)}
@@ -557,10 +617,10 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 )}
 
                 {(invoice.tax ?? 0) > 0 && (
-                  <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
-                    <td className="py-[5px] px-3 text-neutral-500 font-medium">Tax / GST</td>
+                  <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td className="py-1.5 px-3 text-slate-500 font-medium">Tax / GST</td>
                     <td
-                      className="py-[5px] px-3 text-right font-medium text-neutral-900"
+                      className="py-1.5 px-3 text-right font-semibold text-slate-800"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       + {formatCurrency(invoice.tax || 0, currency)}
@@ -568,29 +628,25 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                   </tr>
                 )}
 
-                <tr
-                  className="text-white"
-                  style={{ backgroundColor: "#2041ce" }}
-                >
-                  <td className="py-[6px] px-3 uppercase tracking-[0.08em] text-[10px] font-bold">
+                {/* Grand Total */}
+                <tr style={{ backgroundColor: "#1e293b", color: "#ffffff" }}>
+                  <td className="py-2 px-3 uppercase tracking-[0.1em] text-[9px] font-extrabold">
                     Grand Total
                   </td>
                   <td
-                    className="py-[6px] px-3 text-right font-black text-[13px]"
+                    className="py-2 px-3 text-right font-black text-[13.5px]"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(invoice.total, currency)}
                   </td>
                 </tr>
 
+                {/* Advance Received */}
                 {invoice.advance > 0 && (
-                  <tr
-                    className="text-emerald-800 bg-emerald-50"
-                    style={{ borderBottom: "1px solid #e5e5e5" }}
-                  >
-                    <td className="py-[5px] px-3 font-medium">Advance Received</td>
+                  <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#f0fdf4" }}>
+                    <td className="py-1.5 px-3 text-emerald-800 font-semibold">Advance Payment</td>
                     <td
-                      className="py-[5px] px-3 text-right font-semibold"
+                      className="py-1.5 px-3 text-right font-extrabold text-emerald-800"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency(invoice.advance, currency)}
@@ -598,16 +654,14 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                   </tr>
                 )}
 
+                {/* Subsequent / Total Payments */}
                 {(invoice.paidAmount ?? 0) > (invoice.advance || 0) && (
-                  <tr
-                    className="text-emerald-800 bg-emerald-50"
-                    style={{ borderBottom: "1px solid #e5e5e5" }}
-                  >
-                    <td className="py-[5px] px-3 font-medium">
-                      {invoice.advance > 0 ? "Subsequent Payments" : "Payments Received"}
+                  <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#f0fdf4" }}>
+                    <td className="py-1.5 px-3 text-emerald-800 font-semibold">
+                      {invoice.advance > 0 ? "Further Payments" : "Total Paid"}
                     </td>
                     <td
-                      className="py-[5px] px-3 text-right font-semibold"
+                      className="py-1.5 px-3 text-right font-extrabold text-emerald-800"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency((invoice.paidAmount ?? 0) - (invoice.advance || 0), currency)}
@@ -615,31 +669,25 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                   </tr>
                 )}
 
-                {(invoice.advance > 0 && (invoice.paidAmount ?? 0) > invoice.advance) && (
-                  <tr
-                    className="text-emerald-950 font-bold bg-emerald-100/70"
-                    style={{ borderBottom: "1px solid #e5e5e5" }}
-                  >
-                    <td className="py-[5px] px-3 text-[10px]">Total Paid to Date</td>
-                    <td
-                      className="py-[5px] px-3 text-right text-[11px]"
-                      style={{ fontVariantNumeric: "tabular-nums" }}
-                    >
-                      - {formatCurrency(invoice.paidAmount ?? 0, currency)}
-                    </td>
-                  </tr>
-                )}
-
-                <tr style={{ backgroundColor: (invoice.balance <= 0 || invoice.status === "Paid") ? "#ecfdf5" : "#eef2ff" }}>
+                {/* Balance Due / Paid In Full Callout */}
+                <tr
+                  style={{
+                    backgroundColor: isPaid ? "#ecfdf5" : "#eff6ff",
+                    borderTop: "2px solid #e2e8f0",
+                  }}
+                >
                   <td
-                    className="py-[6px] px-3 font-bold uppercase text-[10px] tracking-[0.05em]"
-                    style={{ color: (invoice.balance <= 0 || invoice.status === "Paid") ? "#059669" : "#2041ce" }}
+                    className="py-2.5 px-3 font-extrabold uppercase text-[9.5px] tracking-[0.08em]"
+                    style={{ color: isPaid ? "#047857" : "#1d4ed8" }}
                   >
-                    {(invoice.balance <= 0 || invoice.status === "Paid") ? "Status: PAID IN FULL" : "Remaining Balance"}
+                    {isPaid ? "Status: PAID IN FULL" : "Balance Due"}
                   </td>
                   <td
-                    className="py-[6px] px-3 text-right font-black text-[13px]"
-                    style={{ color: (invoice.balance <= 0 || invoice.status === "Paid") ? "#059669" : "#2041ce", fontVariantNumeric: "tabular-nums" }}
+                    className="py-2.5 px-3 text-right font-black text-[14px]"
+                    style={{
+                      color: isPaid ? "#047857" : "#1d4ed8",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
                   >
                     {formatCurrency(invoice.balance <= 0 ? 0 : invoice.balance, currency)}
                   </td>
@@ -648,19 +696,25 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             </table>
           </div>
 
-          <p className="text-[8.5px] text-neutral-400 mt-1 text-right uppercase tracking-[0.1em] font-semibold">
-            Amounts shown in {currency}
+          <p className="text-[8px] text-slate-400 mt-1.5 text-right uppercase tracking-[0.14em] font-bold">
+            All amounts in {currency}
           </p>
         </div>
       </div>
 
-      {/* 6. Footer note — under the signature block, at the very bottom */}
+      {/* 6. Clean Corporate Footer */}
       <footer
-        className="mt-2 pt-1.5 text-center text-[9px] leading-[1.45] text-neutral-500"
-        style={{ borderTop: "1px solid #ececec" }}
+        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400"
+        style={{ borderTop: "1px solid #f1f5f9" }}
       >
-        {settings?.footerText || "This is a computer-generated invoice."}
+        <p>
+          {settings?.footerText || "This is a computer-generated commercial invoice. No signature required if electronically transmitted."}
+        </p>
+        <p className="text-[7.5px] text-slate-300 mt-0.5 tracking-wider uppercase">
+          Generated via Dani Brothers Billing System
+        </p>
       </footer>
     </div>
   );
 };
+

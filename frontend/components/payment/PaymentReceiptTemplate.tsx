@@ -49,12 +49,12 @@ interface PaymentReceiptTemplateProps {
 }
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: "#fafafa",
-  border: "1px solid #e5e5e5",
-  borderRadius: "8px",
+  backgroundColor: "#fcfdfe",
+  border: "1px solid #e2e8f0",
+  borderRadius: "10px",
 };
 
-const labelCls = "text-[8.5px] font-bold uppercase tracking-[0.16em] mb-1";
+const labelCls = "text-[8px] font-extrabold uppercase tracking-[0.18em] mb-1.5";
 
 export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
   payment,
@@ -65,167 +65,201 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
   const inv = payment.invoice;
   const cust = inv.customer;
   const inWords = amountInWords(payment.amount);
+  const isSettled = (inv.balance ?? 0) <= 0;
 
   return (
     <div
       id={id}
-      className="bg-white text-black font-sans"
+      className="bg-white text-slate-900 font-sans"
       style={{
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
         backgroundColor: "#ffffff",
-        color: "#171717",
-        padding: "7mm 10mm",
-        // Same slim branded top edge as Invoice PDF template (#2041ce)
-        borderTop: "3mm solid #2041ce",
+        color: "#0f172a",
+        padding: "8mm 11mm",
+        borderTop: "4mm solid #1e40af",
         display: "flex",
         flexDirection: "column",
-        lineHeight: 1.35,
+        lineHeight: 1.4,
+        fontFeatureSettings: '"cv02", "cv03", "cv04", "cv11"',
       }}
     >
-      {/* 1. Header: logo left, business contact right */}
+      {/* 1. Header */}
       <header
-        className="flex items-start justify-between gap-6 pb-2"
-        style={{ borderBottom: "1px solid #e5e5e5" }}
+        className="flex items-start justify-between gap-6 pb-3"
+        style={{ borderBottom: "1.5px solid #f1f5f9" }}
       >
-        <div>
+        <div className="flex flex-col items-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={settings?.logo || "/logodanibro.svg"}
             alt={settings?.businessName || "Company logo"}
-            style={{ height: "42px", width: "auto", objectFit: "contain" }}
+            style={{ maxHeight: "46px", width: "auto", objectFit: "contain" }}
           />
+          <div className="mt-1 flex items-center gap-1.5">
+            <span
+              className="inline-block px-1.5 py-0.5 rounded text-[7.5px] font-bold tracking-[0.14em] uppercase"
+              style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
+            >
+              Payment Acknowledgment
+            </span>
+            {(settings?.ntn || settings?.strn) && (
+              <span className="text-[8px] font-medium text-slate-400">
+                {settings.ntn && `NTN: ${settings.ntn}`}
+                {settings.ntn && settings.strn && " · "}
+                {settings.strn && `STRN: ${settings.strn}`}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="text-right text-[9.5px] text-neutral-600 leading-[1.45]">
-          <p className="font-bold text-neutral-900 text-[12px]">
+        <div className="text-right text-[9px] text-slate-500 leading-[1.5]">
+          <p className="font-extrabold text-slate-900 text-[13px] tracking-tight">
             {settings?.businessName || "DANI BROTHERS"}
           </p>
-          <p>
+          <p className="text-slate-600 font-medium">
             {settings?.address || "Shop B-13 Sector Z-6 Gulshan e Maymar"},{" "}
             {settings?.city || "Sindh, Karachi"}
           </p>
-          <p>
-            <span className="font-semibold text-neutral-800">Phone</span>{" "}
+          <p className="mt-0.5">
+            <span className="font-semibold text-slate-700">Tel:</span>{" "}
             {settings?.phone || "0333 1360441"}
-            <span className="mx-1.5 text-neutral-300">·</span>
-            <span className="font-semibold text-neutral-800">Email</span>{" "}
+            <span className="mx-1 text-slate-300">|</span>
+            <span className="font-semibold text-slate-700">Email:</span>{" "}
             {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
             <p>
-              <span className="font-semibold text-neutral-800">Web</span>{" "}
+              <span className="font-semibold text-slate-700">Web:</span>{" "}
               {settings.website}
-            </p>
-          )}
-          {(settings?.ntn || settings?.strn) && (
-            <p className="font-semibold text-neutral-700">
-              {settings.ntn && <span>NTN: {settings.ntn} </span>}
-              {settings.strn && <span>· STRN: {settings.strn}</span>}
             </p>
           )}
         </div>
       </header>
 
-      {/* 2. Title band: Same brand styling as Invoice PDF */}
-      <div className="flex items-end justify-between gap-6 mt-2.5">
+      {/* 2. Hero Section */}
+      <div className="flex items-center justify-between gap-4 mt-3 pb-1">
         <div>
-          <h1
-            className="font-black uppercase text-neutral-900"
-            style={{ fontSize: "24px", letterSpacing: "0.1em", lineHeight: 1 }}
-          >
-            Payment Receipt
-          </h1>
-          <div
-            aria-hidden
-            style={{
-              width: "40px",
-              height: "3px",
-              backgroundColor: "#2041ce",
-              borderRadius: "2px",
-              margin: "6px 0 4px",
-            }}
-          />
-          <p className="text-[9px] text-neutral-400 uppercase tracking-[0.14em] font-semibold">
-            Official Acknowledgment of Payment Received
+          <div className="flex items-center gap-2.5">
+            <h1
+              className="font-black uppercase text-slate-900 tracking-[0.06em]"
+              style={{ fontSize: "23px", lineHeight: 1 }}
+            >
+              Payment Receipt
+            </h1>
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.12em]"
+              style={{
+                backgroundColor: "#dcfce7",
+                color: "#15803d",
+                border: "1px solid #86efac",
+              }}
+            >
+              ● Verified Received
+            </span>
+          </div>
+          <p className="text-[8.5px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-1">
+            Official Settlement Acknowledgment
           </p>
         </div>
 
+        {/* Receipt Number & Date Badge */}
         <div
-          className="text-right px-3.5 py-1.5"
-          style={{ backgroundColor: "#eef2ff", borderRadius: "8px" }}
+          className="flex items-center divide-x divide-slate-200 px-3.5 py-2"
+          style={{
+            backgroundColor: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "10px",
+          }}
         >
-          <p
-            className="text-[8.5px] uppercase tracking-[0.18em] font-bold"
-            style={{ color: "#2041ce" }}
-          >
-            Receipt Number
-          </p>
-          <p className="font-mono font-black text-neutral-900 text-[17px] leading-tight mt-0.5">
-            {payment.paymentNumber}
-          </p>
+          <div className="pr-3 text-right">
+            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+              Receipt No
+            </p>
+            <p className="font-mono font-black text-slate-900 text-[15px] leading-tight mt-0.5 tracking-tight">
+              {payment.paymentNumber}
+            </p>
+          </div>
+          <div className="pl-3 text-left">
+            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+              Receipt Date
+            </p>
+            <p className="font-semibold text-slate-800 text-[11px] leading-tight mt-0.5">
+              {formatDate(payment.paymentDate)}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* 3. Cards Grid: Payer Info & Transaction Details */}
-      <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-        <div style={cardStyle} className="px-3 py-2.5">
-          <p className={labelCls} style={{ color: "#2041ce" }}>
-            Received With Thanks From
-          </p>
-          <p className="text-[12.5px] font-bold text-neutral-900">
-            {cust?.name || "WALK-IN CUSTOMER"}
-          </p>
-          {cust?.companyName && (
-            <p className="text-[10.5px] font-semibold text-neutral-700">
-              {cust.companyName}
+      <div className="grid grid-cols-2 gap-3 mt-2.5">
+        <div style={cardStyle} className="p-3 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <p className={labelCls} style={{ color: "#1e40af" }}>
+                Received With Thanks From
+              </p>
+              {cust?.customerCode && (
+                <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  {cust.customerCode}
+                </span>
+              )}
+            </div>
+            <p className="text-[13px] font-extrabold text-slate-900 leading-snug">
+              {cust?.name || "WALK-IN CUSTOMER"}
             </p>
-          )}
-          <p className="text-[10px] text-neutral-600 mt-0.5 leading-[1.45]">
-            {cust?.address || "N/A"}{cust?.city ? `, ${cust.city}` : ""}
-          </p>
-          <p className="text-[10px] text-neutral-800 font-medium">
-            Contact: {cust?.phone || "N/A"}
-          </p>
-          {cust?.customerCode && (
-            <p className="text-[9.5px] text-neutral-500 mt-0.5">
-              Client Code: <strong className="text-neutral-700">{cust.customerCode}</strong>
+            {cust?.companyName && (
+              <p className="text-[10.5px] font-bold text-slate-700 mt-0.5">
+                {cust.companyName}
+              </p>
+            )}
+            <p className="text-[9.5px] text-slate-500 mt-1 leading-[1.45]">
+              {cust?.address || "Address: Walk-in / Direct Client"}
+              {cust?.city ? `, ${cust.city}` : ""}
             </p>
-          )}
+          </div>
+
+          <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[9.5px] text-slate-700">
+            {cust?.phone && (
+              <span>
+                <strong className="font-semibold text-slate-900">Phone:</strong> {cust.phone}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div style={cardStyle} className="px-3 py-2.5">
-          <p className={labelCls} style={{ color: "#2041ce" }}>
+        <div style={cardStyle} className="p-3">
+          <p className={labelCls} style={{ color: "#1e40af" }}>
             Payment &amp; Voucher Details
           </p>
 
-          <div className="text-[10px]">
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Receipt Date</span>
-              <span className="font-semibold text-neutral-900">
+          <div className="text-[9.5px] divide-y divide-slate-100 mt-1">
+            <div className="flex justify-between py-1">
+              <span className="text-slate-400 font-medium">Receipt Date</span>
+              <span className="font-bold text-slate-800">
                 {formatDate(payment.paymentDate)}
               </span>
             </div>
 
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Payment Mode</span>
-              <span className="font-bold text-neutral-900 uppercase">
+            <div className="flex justify-between py-1">
+              <span className="text-slate-400 font-medium">Payment Mode</span>
+              <span className="font-bold text-slate-900 uppercase">
                 {payment.paymentMethod}
               </span>
             </div>
 
-            <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-              <span className="text-neutral-500 font-medium">Against Invoice #</span>
-              <span className="font-mono font-bold" style={{ color: "#2041ce" }}>
+            <div className="flex justify-between py-1">
+              <span className="text-slate-400 font-medium">Against Invoice #</span>
+              <span className="font-mono font-extrabold text-blue-700">
                 {inv.invoiceNumber}
               </span>
             </div>
 
             {payment.reference && (
-              <div className="flex justify-between gap-3 py-[2.5px] border-b border-neutral-200">
-                <span className="text-neutral-500 font-medium">Txn / Bank Ref</span>
-                <span className="font-semibold text-neutral-800 font-mono">
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400 font-medium">Bank / Txn Ref</span>
+                <span className="font-semibold text-slate-800 font-mono">
                   {payment.reference}
                 </span>
               </div>
@@ -234,29 +268,29 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
         </div>
       </div>
 
-      {/* 4. Highlighted Amount Box */}
+      {/* 4. Highlighted Executive Amount Callout Box */}
       <div
         className="mt-3 px-4 py-3 rounded-xl flex items-center justify-between"
         style={{
           backgroundColor: "#f8fafc",
-          border: "1.5px solid #2041ce",
+          border: "1.5px solid #1e40af",
         }}
       >
         <div>
           <span
-            className="text-[9px] uppercase font-bold tracking-[0.16em] block"
-            style={{ color: "#2041ce" }}
+            className="text-[8px] uppercase font-extrabold tracking-[0.18em] block"
+            style={{ color: "#1e40af" }}
           >
             Net Amount Received
           </span>
-          <p className="text-[11px] font-semibold text-neutral-800 mt-0.5 italic">
+          <p className="text-[11px] font-semibold text-slate-700 mt-0.5 italic">
             &ldquo;{inWords}&rdquo;
           </p>
         </div>
         <div className="text-right">
           <span
-            className="text-2xl font-black font-mono tabular-nums"
-            style={{ color: "#2041ce" }}
+            className="text-2xl font-black font-mono tabular-nums tracking-tight"
+            style={{ color: "#1e40af" }}
           >
             {formatCurrency(payment.amount, currency)}
           </span>
@@ -264,36 +298,58 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
       </div>
 
       {/* 5. Invoice Account Settlement Summary */}
-      <div className="mt-3" style={{ border: "1px solid #e5e5e5", borderRadius: "8px", overflow: "hidden" }}>
-        <div className="bg-neutral-100 px-3.5 py-1.5 border-b border-neutral-200 flex justify-between items-center">
-          <span className="text-[9px] uppercase font-bold tracking-wider text-neutral-700">
-            Invoice Financial Summary Status
+      <div
+        className="mt-3"
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "10px",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="px-3 py-1.5 flex justify-between items-center text-white"
+          style={{ backgroundColor: "#1e293b" }}
+        >
+          <span className="text-[8.5px] uppercase font-extrabold tracking-[0.12em]">
+            Invoice Settlement Trail
           </span>
-          <span className="text-[9px] text-neutral-500 font-mono">
+          <span className="text-[8.5px] font-mono text-slate-300">
             Invoice #{inv.invoiceNumber}
           </span>
         </div>
         <table className="w-full text-left border-collapse text-[10px]">
           <tbody>
-            <tr className="border-b border-neutral-200">
-              <td className="py-2 px-3.5 text-neutral-600 font-medium">Total Invoice Amount</td>
-              <td className="py-2 px-3.5 text-right font-semibold text-neutral-900 font-mono">
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td className="py-2 px-3 text-slate-600 font-medium">Total Invoiced Amount</td>
+              <td
+                className="py-2 px-3 text-right font-bold text-slate-900 font-mono"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
                 {formatCurrency(inv.total, currency)}
               </td>
             </tr>
-            <tr className="border-b border-neutral-200 bg-neutral-50">
-              <td className="py-2 px-3.5 text-neutral-600 font-medium">Total Paid to Date (Including this Payment)</td>
-              <td className="py-2 px-3.5 text-right font-bold text-neutral-900 font-mono">
+            <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#fafcfd" }}>
+              <td className="py-2 px-3 text-slate-600 font-medium">Total Paid to Date (Including this Payment)</td>
+              <td
+                className="py-2 px-3 text-right font-bold text-emerald-800 font-mono"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
                 {formatCurrency(inv.paidAmount ?? payment.amount, currency)}
               </td>
             </tr>
-            <tr style={{ backgroundColor: (inv.balance ?? 0) <= 0 ? "#f0fdf4" : "#fef2f2" }}>
-              <td className="py-2 px-3.5 font-bold text-neutral-900">
-                Outstanding Balance Remaining
+            <tr style={{ backgroundColor: isSettled ? "#f0fdf4" : "#eff6ff" }}>
+              <td
+                className="py-2 px-3 font-extrabold uppercase text-[9px] tracking-wider"
+                style={{ color: isSettled ? "#15803d" : "#1d4ed8" }}
+              >
+                {isSettled ? "Invoice Status: PAID IN FULL" : "Remaining Outstanding Balance"}
               </td>
               <td
-                className="py-2 px-3.5 text-right font-black font-mono text-[11px]"
-                style={{ color: (inv.balance ?? 0) <= 0 ? "#059669" : "#dc2626" }}
+                className="py-2 px-3 text-right font-black font-mono text-[13px]"
+                style={{
+                  color: isSettled ? "#15803d" : "#1d4ed8",
+                  fontVariantNumeric: "tabular-nums",
+                }}
               >
                 {formatCurrency(inv.balance ?? 0, currency)}
               </td>
@@ -304,30 +360,42 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
 
       {/* 6. Notes if present */}
       {payment.notes && (
-        <div style={cardStyle} className="mt-3 px-3.5 py-2.5 text-[10px]">
-          <span className="font-bold text-neutral-700 block mb-0.5">Payment Memo / Note:</span>
-          <p className="text-neutral-600">{payment.notes}</p>
+        <div style={cardStyle} className="mt-3 p-3 text-[9.5px]">
+          <span className="font-extrabold uppercase tracking-[0.14em] text-slate-400 block mb-1 text-[8px]">
+            Payment Memo / Note
+          </span>
+          <p className="text-slate-600 leading-relaxed">{payment.notes}</p>
         </div>
       )}
 
       {/* 7. Signatures */}
       <div className="mt-auto pt-8">
         <div className="flex justify-between items-end gap-12">
-          <div className="text-center">
-            <div
-              className="w-56 text-neutral-500 font-semibold text-[9px] uppercase tracking-[0.14em] pt-1.5"
-              style={{ borderTop: "1px solid #d4d4d4" }}
-            >
-              Customer / Payer Signature
+          <div className="w-48 text-center">
+            <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1.5">
+              <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                Payer Confirmation
+              </p>
+              <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                Customer Signature
+              </p>
             </div>
           </div>
 
-          <div className="text-center">
-            <div
-              className="w-56 text-neutral-500 font-semibold text-[9px] uppercase tracking-[0.14em] pt-1.5"
-              style={{ borderTop: "1px solid #d4d4d4" }}
-            >
-              Authorized Signature (Dani Brothers)
+          <div className="w-48 text-center flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={settings?.logo || "/logodanibro.svg"}
+              alt="Company stamp/logo"
+              style={{ maxHeight: "24px", width: "auto", objectFit: "contain", marginBottom: "4px" }}
+            />
+            <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1.5">
+              <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                Dani Brothers
+              </p>
+              <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                Authorized Receipt Signatory
+              </p>
             </div>
           </div>
         </div>
@@ -335,10 +403,15 @@ export const PaymentReceiptTemplate: React.FC<PaymentReceiptTemplateProps> = ({
 
       {/* 8. Footer */}
       <footer
-        className="mt-4 pt-2 text-center text-[9px] leading-[1.45] text-neutral-500"
-        style={{ borderTop: "1px solid #ececec" }}
+        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400"
+        style={{ borderTop: "1px solid #f1f5f9" }}
       >
-        {settings?.footerText || "This is a computer-generated payment receipt. For queries contact 0333 1360441 or danibrothers99@gmail.com"}
+        <p>
+          {settings?.footerText || "This is an official computer-generated payment voucher. Retain for tax & record purposes."}
+        </p>
+        <p className="text-[7.5px] text-slate-300 mt-0.5 tracking-wider uppercase">
+          Generated via Dani Brothers Billing System
+        </p>
       </footer>
     </div>
   );
