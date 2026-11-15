@@ -100,22 +100,52 @@ export async function printInvoiceElement(elementId: string, _title: string = "P
         <title>${_title}</title>
         ${styles}
         <style>
-          @page { size: A4 portrait; margin: 0; }
-          body { 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            background: #ffffff !important;
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
           }
-          #${elementId} {
-            margin: 0 auto !important;
-            box-shadow: none !important;
+          @media print {
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            #${elementId} {
+              width: 100% !important;
+              min-height: auto !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              border-top: none !important;
+              box-shadow: none !important;
+            }
+            .print-table {
+              page-break-inside: auto;
+            }
+            .print-table thead {
+              display: table-header-group !important;
+            }
+            .print-table tbody {
+              display: table-row-group !important;
+            }
+            .print-table tr {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .print-keep-together {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            .print-footer {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div style="display:flex; justify-content:center; width:100%; background:#fff;">
+        <div style="display:block; width:100%; background:#fff;">
           ${element.outerHTML}
         </div>
       </body>
@@ -131,6 +161,6 @@ export async function printInvoiceElement(elementId: string, _title: string = "P
     } catch {
       window.print();
     }
-  }, 400);
+  }, 500);
 }
 

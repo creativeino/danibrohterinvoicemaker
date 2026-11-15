@@ -121,28 +121,56 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
   pushCurrent();
 
   const hasQuotation = Boolean(invoice.quotationNumber || invoice.quotationId);
+  const totalItemCount = invoice.items.length;
+  // Compact layout when items <= 12 to fit on 1 crisp page without spilling
+  const isCompact = totalItemCount <= 12;
 
   return (
     <div
       id={id}
-      className="bg-white text-slate-900 font-sans"
+      className={`bg-white text-slate-900 font-sans print:w-full print:p-0 print:border-t-0 ${isCompact ? "compact-invoice" : ""}`}
       style={{
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
         backgroundColor: "#ffffff",
         color: "#0f172a",
-        padding: "8mm 11mm",
-        borderTop: "4mm solid #1e40af",
+        padding: isCompact ? "6mm 9mm" : "8mm 11mm",
+        borderTop: isCompact ? "3mm solid #1e40af" : "4mm solid #1e40af",
         display: "flex",
         flexDirection: "column",
-        lineHeight: 1.4,
+        lineHeight: isCompact ? 1.3 : 1.4,
         fontFeatureSettings: '"cv02", "cv03", "cv04", "cv11"',
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          #${id} {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: ${isCompact ? "4mm 8mm" : "6mm 10mm"} !important;
+            margin: 0 !important;
+            border-top: none !important;
+          }
+          .invoice-main-table {
+            page-break-inside: auto;
+          }
+          .invoice-main-table thead {
+            display: table-header-group !important;
+          }
+          .invoice-main-table tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .invoice-break-avoid {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}} />
       {/* 1. Top Header: Company logo & brand on left, verified company details on right */}
       <header
-        className="flex items-start justify-between gap-6 pb-3"
+        className={`flex items-start justify-between gap-6 ${isCompact ? "pb-1.5" : "pb-3"}`}
         style={{ borderBottom: "1.5px solid #f1f5f9" }}
       >
         <div className="flex flex-col items-start">
@@ -150,7 +178,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
           <img
             src={settings?.logo || "/logodanibro.svg"}
             alt={settings?.businessName || "Company logo"}
-            style={{ maxHeight: "46px", width: "auto", objectFit: "contain" }}
+            style={{ maxHeight: isCompact ? "36px" : "46px", width: "auto", objectFit: "contain" }}
           />
           <div className="mt-1 flex items-center gap-1.5">
             <span
@@ -169,15 +197,15 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
           </div>
         </div>
 
-        <div className="text-right text-[9px] text-slate-500 leading-[1.5]">
-          <p className="font-extrabold text-slate-900 text-[13px] tracking-tight">
+        <div className="text-right text-[9px] text-slate-500 leading-[1.35]">
+          <p className="font-extrabold text-slate-900 text-[12px] tracking-tight">
             {settings?.businessName || "DANI BROTHERS"}
           </p>
-          <p className="text-slate-600 font-medium">
+          <p className="text-slate-600 font-medium text-[8.5px]">
             {settings?.address || "Shop B-13 Sector Z-6 Gulshan e Maymar"},{" "}
             {settings?.city || "Sindh, Karachi"}
           </p>
-          <p className="mt-0.5">
+          <p className="mt-0.5 text-[8px]">
             <span className="font-semibold text-slate-700">Tel:</span>{" "}
             {settings?.phone || "0333 1360441"}
             <span className="mx-1 text-slate-300">|</span>
@@ -185,7 +213,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
-            <p>
+            <p className="text-[8px]">
               <span className="font-semibold text-slate-700">Web:</span>{" "}
               {settings.website}
             </p>
@@ -194,18 +222,18 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
       </header>
 
       {/* 2. Hero Section: Document title, Status Badge & High-Contrast Number Chip */}
-      <div className="flex items-center justify-between gap-4 mt-3 pb-1">
+      <div className={`flex items-center justify-between gap-4 ${isCompact ? "mt-1.5 pb-0.5" : "mt-3 pb-1"}`}>
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <h1
               className="font-black uppercase text-slate-900 tracking-[0.06em]"
-              style={{ fontSize: "23px", lineHeight: 1 }}
+              style={{ fontSize: isCompact ? "18px" : "23px", lineHeight: 1 }}
             >
               Invoice
             </h1>
             {/* Status Stamp / Badge */}
             <span
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.12em]"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-[0.12em]"
               style={{
                 backgroundColor: isPaid
                   ? "#dcfce7"
@@ -235,33 +263,33 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
               ● {invoice.status || (isPaid ? "Paid" : "Issued")}
             </span>
           </div>
-          <p className="text-[8.5px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-1">
+          <p className="text-[8px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-0.5">
             Original Commercial Copy
           </p>
         </div>
 
         {/* Invoice Number & Date Badge */}
         <div
-          className="flex items-center divide-x divide-slate-200 px-3.5 py-2"
+          className="flex items-center divide-x divide-slate-200 px-3 py-1.5"
           style={{
             backgroundColor: "#f8fafc",
             border: "1px solid #e2e8f0",
-            borderRadius: "10px",
+            borderRadius: "8px",
           }}
         >
-          <div className="pr-3 text-right">
-            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+          <div className="pr-2.5 text-right">
+            <p className="text-[7px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
               Invoice No
             </p>
-            <p className="font-mono font-black text-slate-900 text-[15px] leading-tight mt-0.5 tracking-tight">
+            <p className="font-mono font-black text-slate-900 text-[13px] leading-tight mt-0.5 tracking-tight">
               {invoice.invoiceNumber || "INV-NEW"}
             </p>
           </div>
-          <div className="pl-3 text-left">
-            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+          <div className="pl-2.5 text-left">
+            <p className="text-[7px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
               Issue Date
             </p>
-            <p className="font-semibold text-slate-800 text-[11px] leading-tight mt-0.5">
+            <p className="font-semibold text-slate-800 text-[10px] leading-tight mt-0.5">
               {formatDate(invoice.invoiceDate)}
             </p>
           </div>
@@ -269,35 +297,35 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
       </div>
 
       {/* 3. Customer & Meta Details Grid */}
-      <div className="grid grid-cols-2 gap-3 mt-2.5">
+      <div className={`grid grid-cols-2 gap-2.5 ${isCompact ? "mt-1.5" : "mt-2.5"}`}>
         {/* Customer Card */}
-        <div style={cardStyle} className="p-3 flex flex-col justify-between">
+        <div style={cardStyle} className={isCompact ? "p-2 flex flex-col justify-between" : "p-3 flex flex-col justify-between"}>
           <div>
             <div className="flex items-center justify-between">
-              <p className={labelCls} style={{ color: "#1e40af" }}>
+              <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
                 Billed To
               </p>
               {invoice.customer?.customerCode && (
-                <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                <span className="text-[7.5px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                   {invoice.customer.customerCode}
                 </span>
               )}
             </div>
-            <p className="text-[13px] font-extrabold text-slate-900 leading-snug">
+            <p className="text-[12px] font-extrabold text-slate-900 leading-snug">
               {invoice.customer?.name || "WALK-IN CUSTOMER"}
             </p>
             {invoice.customer?.companyName && (
-              <p className="text-[10.5px] font-bold text-slate-700 mt-0.5">
+              <p className="text-[10px] font-bold text-slate-700 mt-0.5">
                 {invoice.customer.companyName}
               </p>
             )}
-            <p className="text-[9.5px] text-slate-500 mt-1 leading-[1.45]">
+            <p className="text-[8.5px] text-slate-500 mt-0.5 leading-[1.3]">
               {invoice.customer?.address || "Address: Walk-in / Direct Sales"}
               {invoice.customer?.city ? `, ${invoice.customer.city}` : ""}
             </p>
           </div>
 
-          <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[9.5px] text-slate-700">
+          <div className="pt-1 mt-1 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[8.5px] text-slate-700">
             {invoice.customer?.phone && (
               <span>
                 <strong className="font-semibold text-slate-900">Phone:</strong> {invoice.customer.phone}
@@ -312,13 +340,13 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
         </div>
 
         {/* Invoice Meta Card */}
-        <div style={cardStyle} className="p-3">
-          <p className={labelCls} style={{ color: "#1e40af" }}>
+        <div style={cardStyle} className={isCompact ? "p-2" : "p-3"}>
+          <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
             Invoice Details
           </p>
 
-          <div className="text-[9.5px] divide-y divide-slate-100 mt-1">
-            <div className="flex justify-between py-1">
+          <div className="text-[8.5px] divide-y divide-slate-100 mt-0.5">
+            <div className="flex justify-between py-0.5">
               <span className="text-slate-400 font-medium">Invoice Date</span>
               <span className="font-bold text-slate-800">
                 {formatDate(invoice.invoiceDate)}
@@ -326,7 +354,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             </div>
 
             {invoice.dueDate && (
-              <div className="flex justify-between py-1">
+              <div className="flex justify-between py-0.5">
                 <span className="text-slate-400 font-medium">Payment Due Date</span>
                 <span className="font-bold text-slate-800">
                   {formatDate(invoice.dueDate)}
@@ -335,7 +363,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             )}
 
             {hasQuotation && (
-              <div className="flex justify-between py-1">
+              <div className="flex justify-between py-0.5">
                 <span className="text-slate-400 font-medium">Quotation Reference</span>
                 <span className="font-bold text-indigo-700 font-mono">
                   {invoice.quotationNumber || invoice.quotationId}
@@ -344,7 +372,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             )}
 
             {invoice.referenceNumber && (
-              <div className="flex justify-between py-1">
+              <div className="flex justify-between py-0.5">
                 <span className="text-slate-400 font-medium">Purchase Order / Ref</span>
                 <span className="font-bold text-slate-800 font-mono">
                   {invoice.referenceNumber}
@@ -352,7 +380,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
               </div>
             )}
 
-            <div className="flex justify-between items-center py-1">
+            <div className="flex justify-between items-center py-0.5">
               <span className="text-slate-400 font-medium">Payment Method / Status</span>
               <span className="font-bold text-slate-800">
                 {isPaid ? "Fully Settled" : isPartial ? "Partially Paid" : "Unpaid / Pending"}
@@ -364,47 +392,47 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
       {/* 4. Line items table with refined executive design */}
       <div
-        className="mt-3"
+        className={`${isCompact ? "mt-2" : "mt-3"} print:overflow-visible`}
         style={{
           border: "1px solid #e2e8f0",
-          borderRadius: "10px",
+          borderRadius: "8px",
           overflow: "hidden",
         }}
       >
-        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-          <thead>
+        <table className="w-full text-left border-collapse print-table invoice-main-table" style={{ tableLayout: "fixed" }}>
+          <thead style={{ display: "table-header-group" }}>
             <tr
-              className="text-white text-[8.5px] uppercase tracking-[0.12em]"
+              className={`text-white uppercase tracking-[0.12em] ${isCompact ? "text-[8px]" : "text-[8.5px]"}`}
               style={{ backgroundColor: "#1e293b" }}
             >
               <th
-                className="py-2 px-2.5 text-center font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2" : "py-2 px-2.5"} text-center font-extrabold`}
                 style={{ width: "12mm" }}
               >
                 #
               </th>
               <th
-                className="py-2 px-2.5 text-center font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2" : "py-2 px-2.5"} text-center font-extrabold`}
                 style={{ width: "15mm" }}
               >
                 Qty
               </th>
-              <th className="py-2 px-3 font-extrabold">Item Description</th>
+              <th className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} font-extrabold`}>Item Description</th>
               <th
-                className="py-2 px-3 text-right font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} text-right font-extrabold`}
                 style={{ width: "32mm" }}
               >
                 Rate ({currency})
               </th>
               <th
-                className="py-2 px-3 text-right font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} text-right font-extrabold`}
                 style={{ width: "36mm" }}
               >
                 Amount ({currency})
               </th>
             </tr>
           </thead>
-          <tbody className="text-[10px]">
+          <tbody className={isCompact ? "text-[9px]" : "text-[10px]"}>
             {groupedSections.length === 0 && (
               <tr>
                 <td
@@ -419,10 +447,16 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             {groupedSections.map((group, gIdx) => (
               <React.Fragment key={gIdx}>
                 {group.sectionTitle && (
-                  <tr style={{ backgroundColor: "#f8fafc" }}>
+                  <tr
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      breakInside: "avoid",
+                      pageBreakInside: "avoid",
+                    }}
+                  >
                     <td
                       colSpan={5}
-                      className="py-1 px-3 font-extrabold uppercase tracking-[0.14em] text-[8.5px]"
+                      className={`font-extrabold uppercase tracking-[0.14em] ${isCompact ? "py-0.5 px-2.5 text-[8px]" : "py-1 px-3 text-[8.5px]"}`}
                       style={{
                         borderBottom: "1px solid #e2e8f0",
                         borderTop: gIdx > 0 ? "1px solid #e2e8f0" : "none",
@@ -440,35 +474,37 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                     style={{
                       backgroundColor: iIdx % 2 === 1 ? "#fafcfd" : "#ffffff",
                       borderBottom: "1px solid #f1f5f9",
+                      breakInside: "avoid",
+                      pageBreakInside: "avoid",
                     }}
                   >
-                    <td className="py-2 px-2.5 text-center text-slate-400 font-semibold align-top text-[9.5px]">
+                    <td className={`text-center text-slate-400 font-semibold align-top ${isCompact ? "py-1 px-2 text-[8.5px]" : "py-2 px-2.5 text-[9.5px]"}`}>
                       {String(seq).padStart(2, "0")}
                     </td>
                     <td
-                      className="py-2 px-2.5 text-center font-extrabold text-slate-900 align-top"
+                      className={`text-center font-extrabold text-slate-900 align-top ${isCompact ? "py-1 px-2" : "py-2 px-2.5"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.quantity}
                     </td>
-                    <td className="py-2 px-3 text-slate-800 align-top pr-4">
+                    <td className={`text-slate-800 align-top pr-3 ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}>
                       <p className="font-bold text-slate-900 leading-snug">
                         {item.description.split("\n")[0]}
                       </p>
                       {item.description.includes("\n") && (
-                        <p className="text-[9px] text-slate-500 mt-0.5 whitespace-pre-wrap leading-normal font-normal">
+                        <p className={`text-slate-500 whitespace-pre-wrap leading-tight font-normal ${isCompact ? "text-[8px] mt-0.5" : "text-[9px] mt-0.5"}`}>
                           {item.description.split("\n").slice(1).join("\n")}
                         </p>
                       )}
                     </td>
                     <td
-                      className="py-2 px-3 text-right font-medium text-slate-600 align-top"
+                      className={`text-right font-medium text-slate-600 align-top ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.rate.toLocaleString("en-PK")}
                     </td>
                     <td
-                      className="py-2 px-3 text-right font-bold text-slate-900 align-top"
+                      className={`text-right font-bold text-slate-900 align-top ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.amount.toLocaleString("en-PK")}
@@ -482,15 +518,15 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
       </div>
 
       {/* 5. Bottom Split: Terms & Signatures (Left) + Totals Summary (Right) */}
-      <div className="grid grid-cols-12 gap-3 mt-3 flex-1 items-start">
+      <div className={`grid grid-cols-12 gap-2.5 ${isCompact ? "mt-2" : "mt-3"} flex-1 items-start print-keep-together invoice-break-avoid`} style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
         {/* Left Column: Notes & Trail */}
         <div className="col-span-7 flex flex-col justify-between h-full">
           <div>
-            <div style={cardStyle} className="p-3">
-              <p className={labelCls} style={{ color: "#1e40af" }}>
+            <div style={cardStyle} className={isCompact ? "p-2" : "p-3"}>
+              <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
                 Terms &amp; Important Notes
               </p>
-              <p className="text-slate-600 text-[9.5px] leading-[1.5] whitespace-pre-wrap">
+              <p className={`text-slate-600 whitespace-pre-wrap ${isCompact ? "text-[8.5px] leading-[1.35]" : "text-[9.5px] leading-[1.5]"}`}>
                 {invoice.notes ||
                   settings?.defaultNotes ||
                   "Thank you for choosing Dani Brothers. All equipment carries 1 Year standard manufacturer warranty. Physical damage, electrical surge or burns are strictly void."}
@@ -500,18 +536,18 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             {/* Payment History Log (if payments exist) */}
             {invoice.payments && invoice.payments.length > 0 && (
               <div
-                className="p-2.5 mt-2 rounded-lg"
+                className={`rounded-lg ${isCompact ? "p-2 mt-1.5" : "p-2.5 mt-2"}`}
                 style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}
               >
-                <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-200">
-                  <span className="text-[8px] font-extrabold uppercase tracking-[0.16em] text-emerald-800">
+                <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-200">
+                  <span className="text-[7.5px] font-extrabold uppercase tracking-[0.16em] text-emerald-800">
                     Payment Receipts ({invoice.payments.length})
                   </span>
-                  <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">
                     Settlement Trail
                   </span>
                 </div>
-                <div className="space-y-1 text-[8.5px]">
+                <div className={`space-y-0.5 ${isCompact ? "text-[8px]" : "text-[8.5px]"}`}>
                   {invoice.payments.map((p, pIdx) => (
                     <div
                       key={p.id || pIdx}
@@ -537,31 +573,31 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
           </div>
 
           {/* Dual Signatures */}
-          <div className="pt-6 mt-auto">
+          <div className={`${isCompact ? "pt-3" : "pt-6"} mt-auto`}>
             <div className="flex justify-between items-end gap-6">
-              <div className="w-40 text-center flex flex-col items-center">
+              <div className="w-36 text-center flex flex-col items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={settings?.logo || "/logodanibro.svg"}
                   alt="Company stamp/logo"
-                  style={{ maxHeight: "24px", width: "auto", objectFit: "contain", marginBottom: "4px" }}
+                  style={{ maxHeight: isCompact ? "20px" : "24px", width: "auto", objectFit: "contain", marginBottom: "3px" }}
                 />
-                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1.5">
-                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1">
+                  <p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                     Dani Brothers
                   </p>
-                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                  <p className="text-[7px] text-slate-400 uppercase tracking-wider">
                     Authorized Signatory
                   </p>
                 </div>
               </div>
 
-              <div className="w-36 text-center">
-                <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1.5">
-                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+              <div className="w-32 text-center">
+                <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1">
+                  <p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                     Received By
                   </p>
-                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                  <p className="text-[7px] text-slate-400 uppercase tracking-wider">
                     Customer Signature
                   </p>
                 </div>
@@ -575,17 +611,17 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
           <div
             style={{
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "8px",
               overflow: "hidden",
               backgroundColor: "#ffffff",
             }}
           >
-            <table className="w-full border-collapse text-[10px]">
+            <table className={`w-full border-collapse ${isCompact ? "text-[9px]" : "text-[10px]"}`}>
               <tbody>
                 <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td className="py-1.5 px-3 text-slate-500 font-medium">Subtotal</td>
+                  <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-slate-500 font-medium`}>Subtotal</td>
                   <td
-                    className="py-1.5 px-3 text-right font-bold text-slate-800"
+                    className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-bold text-slate-800`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(invoice.subtotal, currency)}
@@ -594,9 +630,9 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
                 {invoice.discount > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#fff1f2" }}>
-                    <td className="py-1.5 px-3 text-rose-700 font-semibold">Special Discount</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-rose-700 font-semibold`}>Special Discount</td>
                     <td
-                      className="py-1.5 px-3 text-right font-extrabold text-rose-700"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-extrabold text-rose-700`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency(invoice.discount, currency)}
@@ -606,9 +642,9 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
                 {(invoice.additionalCharges ?? 0) > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td className="py-1.5 px-3 text-slate-500 font-medium">Charges / Adjustment</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-slate-500 font-medium`}>Charges / Adjustment</td>
                     <td
-                      className="py-1.5 px-3 text-right font-semibold text-slate-800"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-semibold text-slate-800`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       + {formatCurrency(invoice.additionalCharges || 0, currency)}
@@ -618,9 +654,9 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
                 {(invoice.tax ?? 0) > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td className="py-1.5 px-3 text-slate-500 font-medium">Tax / GST</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-slate-500 font-medium`}>Tax / GST</td>
                     <td
-                      className="py-1.5 px-3 text-right font-semibold text-slate-800"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-semibold text-slate-800`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       + {formatCurrency(invoice.tax || 0, currency)}
@@ -630,11 +666,11 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
                 {/* Grand Total */}
                 <tr style={{ backgroundColor: "#1e293b", color: "#ffffff" }}>
-                  <td className="py-2 px-3 uppercase tracking-[0.1em] text-[9px] font-extrabold">
+                  <td className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} uppercase tracking-[0.1em] text-[8.5px] font-extrabold`}>
                     Grand Total
                   </td>
                   <td
-                    className="py-2 px-3 text-right font-black text-[13.5px]"
+                    className={`${isCompact ? "py-1.5 px-2.5 text-[12.5px]" : "py-2 px-3 text-[13.5px]"} text-right font-black`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(invoice.total, currency)}
@@ -644,9 +680,9 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 {/* Advance Received */}
                 {invoice.advance > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#f0fdf4" }}>
-                    <td className="py-1.5 px-3 text-emerald-800 font-semibold">Advance Payment</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-emerald-800 font-semibold`}>Advance Payment</td>
                     <td
-                      className="py-1.5 px-3 text-right font-extrabold text-emerald-800"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-extrabold text-emerald-800`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency(invoice.advance, currency)}
@@ -657,11 +693,11 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                 {/* Subsequent / Total Payments */}
                 {(invoice.paidAmount ?? 0) > (invoice.advance || 0) && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#f0fdf4" }}>
-                    <td className="py-1.5 px-3 text-emerald-800 font-semibold">
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-emerald-800 font-semibold`}>
                       {invoice.advance > 0 ? "Further Payments" : "Total Paid"}
                     </td>
                     <td
-                      className="py-1.5 px-3 text-right font-extrabold text-emerald-800"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-extrabold text-emerald-800`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency((invoice.paidAmount ?? 0) - (invoice.advance || 0), currency)}
@@ -677,13 +713,13 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
                   }}
                 >
                   <td
-                    className="py-2.5 px-3 font-extrabold uppercase text-[9.5px] tracking-[0.08em]"
+                    className={`${isCompact ? "py-1.5 px-2.5 text-[8.5px]" : "py-2.5 px-3 text-[9.5px]"} font-extrabold uppercase tracking-[0.08em]`}
                     style={{ color: isPaid ? "#047857" : "#1d4ed8" }}
                   >
                     {isPaid ? "Status: PAID IN FULL" : "Balance Due"}
                   </td>
                   <td
-                    className="py-2.5 px-3 text-right font-black text-[14px]"
+                    className={`${isCompact ? "py-1.5 px-2.5 text-[12.5px]" : "py-2.5 px-3 text-[14px]"} text-right font-black`}
                     style={{
                       color: isPaid ? "#047857" : "#1d4ed8",
                       fontVariantNumeric: "tabular-nums",
@@ -696,7 +732,7 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
             </table>
           </div>
 
-          <p className="text-[8px] text-slate-400 mt-1.5 text-right uppercase tracking-[0.14em] font-bold">
+          <p className="text-[7.5px] text-slate-400 mt-1 text-right uppercase tracking-[0.14em] font-bold">
             All amounts in {currency}
           </p>
         </div>
@@ -704,8 +740,8 @@ export const InvoicePDFTemplate: React.FC<InvoicePDFTemplateProps> = ({
 
       {/* 6. Clean Corporate Footer */}
       <footer
-        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400"
-        style={{ borderTop: "1px solid #f1f5f9" }}
+        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400 print-footer invoice-break-avoid"
+        style={{ borderTop: "1px solid #f1f5f9", breakInside: "avoid", pageBreakInside: "avoid" }}
       >
         <p>
           {settings?.footerText || "This is a computer-generated commercial invoice. No signature required if electronically transmitted."}

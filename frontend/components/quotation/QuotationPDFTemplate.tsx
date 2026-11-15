@@ -111,27 +111,55 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
   });
   pushCurrent();
 
+  const totalItemCount = quotation.items.length;
+  const isCompact = totalItemCount <= 12;
+
   return (
     <div
       id={id}
-      className="bg-white text-slate-900 font-sans"
+      className={`bg-white text-slate-900 font-sans print:w-full print:p-0 print:border-t-0 ${isCompact ? "compact-quotation" : ""}`}
       style={{
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
         backgroundColor: "#ffffff",
         color: "#0f172a",
-        padding: "8mm 11mm",
-        borderTop: "4mm solid #1e40af",
+        padding: isCompact ? "6mm 9mm" : "8mm 11mm",
+        borderTop: isCompact ? "3mm solid #1e40af" : "4mm solid #1e40af",
         display: "flex",
         flexDirection: "column",
-        lineHeight: 1.4,
+        lineHeight: isCompact ? 1.3 : 1.4,
         fontFeatureSettings: '"cv02", "cv03", "cv04", "cv11"',
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          #${id} {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: ${isCompact ? "4mm 8mm" : "6mm 10mm"} !important;
+            margin: 0 !important;
+            border-top: none !important;
+          }
+          .quotation-main-table {
+            page-break-inside: auto;
+          }
+          .quotation-main-table thead {
+            display: table-header-group !important;
+          }
+          .quotation-main-table tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .quotation-break-avoid {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}} />
       {/* 1. Top Header */}
       <header
-        className="flex items-start justify-between gap-6 pb-3"
+        className={`flex items-start justify-between gap-6 ${isCompact ? "pb-1.5" : "pb-3"}`}
         style={{ borderBottom: "1.5px solid #f1f5f9" }}
       >
         <div className="flex flex-col items-start">
@@ -139,7 +167,7 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
           <img
             src={settings?.logo || "/logodanibro.svg"}
             alt={settings?.businessName || "Company logo"}
-            style={{ maxHeight: "46px", width: "auto", objectFit: "contain" }}
+            style={{ maxHeight: isCompact ? "36px" : "46px", width: "auto", objectFit: "contain" }}
           />
           <div className="mt-1 flex items-center gap-1.5">
             <span
@@ -158,15 +186,15 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
           </div>
         </div>
 
-        <div className="text-right text-[9px] text-slate-500 leading-[1.5]">
-          <p className="font-extrabold text-slate-900 text-[13px] tracking-tight">
+        <div className="text-right text-[9px] text-slate-500 leading-[1.35]">
+          <p className="font-extrabold text-slate-900 text-[12px] tracking-tight">
             {settings?.businessName || "DANI BROTHERS"}
           </p>
-          <p className="text-slate-600 font-medium">
+          <p className="text-slate-600 font-medium text-[8.5px]">
             {settings?.address || "Shop B-13 Sector Z-6 Gulshan e Maymar"},{" "}
             {settings?.city || "Sindh, Karachi"}
           </p>
-          <p className="mt-0.5">
+          <p className="mt-0.5 text-[8px]">
             <span className="font-semibold text-slate-700">Tel:</span>{" "}
             {settings?.phone || "0333 1360441"}
             <span className="mx-1 text-slate-300">|</span>
@@ -174,7 +202,7 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
             {settings?.email || "danibrothers99@gmail.com"}
           </p>
           {settings?.website && (
-            <p>
+            <p className="text-[8px]">
               <span className="font-semibold text-slate-700">Web:</span>{" "}
               {settings.website}
             </p>
@@ -183,17 +211,17 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
       </header>
 
       {/* 2. Hero Section */}
-      <div className="flex items-center justify-between gap-4 mt-3 pb-1">
+      <div className={`flex items-center justify-between gap-4 ${isCompact ? "mt-1.5 pb-0.5" : "mt-3 pb-1"}`}>
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <h1
               className="font-black uppercase text-slate-900 tracking-[0.06em]"
-              style={{ fontSize: "23px", lineHeight: 1 }}
+              style={{ fontSize: isCompact ? "18px" : "23px", lineHeight: 1 }}
             >
               Quotation
             </h1>
             <span
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.12em]"
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-[0.12em]"
               style={{
                 backgroundColor: badgeColors.bg,
                 color: badgeColors.text,
@@ -203,33 +231,33 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
               ● {quotation.status || "Draft"}
             </span>
           </div>
-          <p className="text-[8.5px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-1">
+          <p className="text-[8px] text-slate-400 uppercase tracking-[0.16em] font-bold mt-0.5">
             Official Price Estimate &amp; Proposal
           </p>
         </div>
 
         {/* Quotation Number & Date Badge */}
         <div
-          className="flex items-center divide-x divide-slate-200 px-3.5 py-2"
+          className="flex items-center divide-x divide-slate-200 px-3 py-1.5"
           style={{
             backgroundColor: "#f8fafc",
             border: "1px solid #e2e8f0",
-            borderRadius: "10px",
+            borderRadius: "8px",
           }}
         >
-          <div className="pr-3 text-right">
-            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+          <div className="pr-2.5 text-right">
+            <p className="text-[7px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
               Quotation No
             </p>
-            <p className="font-mono font-black text-slate-900 text-[15px] leading-tight mt-0.5 tracking-tight">
+            <p className="font-mono font-black text-slate-900 text-[13px] leading-tight mt-0.5 tracking-tight">
               {quotation.quotationNumber || "QT-NEW"}
             </p>
           </div>
-          <div className="pl-3 text-left">
-            <p className="text-[7.5px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
+          <div className="pl-2.5 text-left">
+            <p className="text-[7px] uppercase tracking-[0.18em] font-extrabold text-slate-400">
               Issue Date
             </p>
-            <p className="font-semibold text-slate-800 text-[11px] leading-tight mt-0.5">
+            <p className="font-semibold text-slate-800 text-[10px] leading-tight mt-0.5">
               {formatDate(quotation.date)}
             </p>
           </div>
@@ -237,34 +265,34 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
       </div>
 
       {/* 3. Customer & Proposal Meta Details Grid */}
-      <div className="grid grid-cols-2 gap-3 mt-2.5">
-        <div style={cardStyle} className="p-3 flex flex-col justify-between">
+      <div className={`grid grid-cols-2 gap-2.5 ${isCompact ? "mt-1.5" : "mt-2.5"}`}>
+        <div style={cardStyle} className={isCompact ? "p-2 flex flex-col justify-between" : "p-3 flex flex-col justify-between"}>
           <div>
             <div className="flex items-center justify-between">
-              <p className={labelCls} style={{ color: "#1e40af" }}>
+              <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
                 Prepared For
               </p>
               {quotation.customer?.customerCode && (
-                <span className="text-[8px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                <span className="text-[7.5px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                   {quotation.customer.customerCode}
                 </span>
               )}
             </div>
-            <p className="text-[13px] font-extrabold text-slate-900 leading-snug">
+            <p className="text-[11.5px] font-extrabold text-slate-900 leading-snug">
               {quotation.customer?.name || "WALK-IN CUSTOMER"}
             </p>
             {quotation.customer?.companyName && (
-              <p className="text-[10.5px] font-bold text-slate-700 mt-0.5">
+              <p className="text-[9.5px] font-bold text-slate-700 mt-0.5">
                 {quotation.customer.companyName}
               </p>
             )}
-            <p className="text-[9.5px] text-slate-500 mt-1 leading-[1.45]">
+            <p className="text-[8.5px] text-slate-500 mt-0.5 leading-[1.3]">
               {quotation.customer?.address || "Address: Walk-in / Direct Client"}
               {quotation.customer?.city ? `, ${quotation.customer.city}` : ""}
             </p>
           </div>
 
-          <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[9.5px] text-slate-700">
+          <div className="pt-1 mt-1 border-t border-slate-100 flex flex-wrap items-center gap-x-3 text-[8.5px] text-slate-700">
             {quotation.customer?.phone && (
               <span>
                 <strong className="font-semibold text-slate-900">Phone:</strong> {quotation.customer.phone}
@@ -278,34 +306,34 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
           </div>
         </div>
 
-        <div style={cardStyle} className="p-3">
-          <p className={labelCls} style={{ color: "#1e40af" }}>
+        <div style={cardStyle} className={isCompact ? "p-2" : "p-3"}>
+          <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
             Proposal Details
           </p>
 
-          <div className="text-[9.5px] divide-y divide-slate-100 mt-1">
-            <div className="flex justify-between py-1">
+          <div className="text-[8.5px] divide-y divide-slate-100 mt-0.5">
+            <div className="flex justify-between py-0.5">
               <span className="text-slate-400 font-medium">Quotation Date</span>
               <span className="font-bold text-slate-800">
                 {formatDate(quotation.date)}
               </span>
             </div>
 
-            <div className="flex justify-between py-1">
+            <div className="flex justify-between py-0.5">
               <span className="text-slate-400 font-medium">Client Reference</span>
               <span className="font-bold text-slate-800 font-mono">
                 {quotation.customer?.customerCode || "WALK-IN"}
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-1">
+            <div className="flex justify-between items-center py-0.5">
               <span className="text-slate-400 font-medium">Validity Period</span>
               <span className="font-bold text-blue-700">
                 7 Days from Issue
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-1">
+            <div className="flex justify-between items-center py-0.5">
               <span className="text-slate-400 font-medium">Current Status</span>
               <span className="font-bold text-slate-800">
                 {quotation.status || "Draft"}
@@ -317,47 +345,47 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
 
       {/* 4. Line items table */}
       <div
-        className="mt-3"
+        className={`${isCompact ? "mt-2" : "mt-3"} print:overflow-visible`}
         style={{
           border: "1px solid #e2e8f0",
-          borderRadius: "10px",
+          borderRadius: "8px",
           overflow: "hidden",
         }}
       >
-        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed" }}>
-          <thead>
+        <table className="w-full text-left border-collapse print-table quotation-main-table" style={{ tableLayout: "fixed" }}>
+          <thead style={{ display: "table-header-group" }}>
             <tr
-              className="text-white text-[8.5px] uppercase tracking-[0.12em]"
+              className={`text-white uppercase tracking-[0.12em] ${isCompact ? "text-[8px]" : "text-[8.5px]"}`}
               style={{ backgroundColor: "#1e293b" }}
             >
               <th
-                className="py-2 px-2.5 text-center font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2" : "py-2 px-2.5"} text-center font-extrabold`}
                 style={{ width: "12mm" }}
               >
                 #
               </th>
               <th
-                className="py-2 px-2.5 text-center font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2" : "py-2 px-2.5"} text-center font-extrabold`}
                 style={{ width: "15mm" }}
               >
                 Qty
               </th>
-              <th className="py-2 px-3 font-extrabold">Proposed Item / Scope</th>
+              <th className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} font-extrabold`}>Proposed Item / Scope</th>
               <th
-                className="py-2 px-3 text-right font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} text-right font-extrabold`}
                 style={{ width: "32mm" }}
               >
                 Rate ({currency})
               </th>
               <th
-                className="py-2 px-3 text-right font-extrabold"
+                className={`${isCompact ? "py-1.5 px-2.5" : "py-2 px-3"} text-right font-extrabold`}
                 style={{ width: "36mm" }}
               >
                 Amount ({currency})
               </th>
             </tr>
           </thead>
-          <tbody className="text-[10px]">
+          <tbody className={isCompact ? "text-[9px]" : "text-[10px]"}>
             {groupedSections.length === 0 && (
               <tr>
                 <td
@@ -372,10 +400,16 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
             {groupedSections.map((group, gIdx) => (
               <React.Fragment key={gIdx}>
                 {group.sectionTitle && (
-                  <tr style={{ backgroundColor: "#f8fafc" }}>
+                  <tr
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      breakInside: "avoid",
+                      pageBreakInside: "avoid",
+                    }}
+                  >
                     <td
                       colSpan={5}
-                      className="py-1 px-3 font-extrabold uppercase tracking-[0.14em] text-[8.5px]"
+                      className={`font-extrabold uppercase tracking-[0.14em] ${isCompact ? "py-0.5 px-2.5 text-[8px]" : "py-1 px-3 text-[8.5px]"}`}
                       style={{
                         borderBottom: "1px solid #e2e8f0",
                         borderTop: gIdx > 0 ? "1px solid #e2e8f0" : "none",
@@ -393,35 +427,37 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
                     style={{
                       backgroundColor: iIdx % 2 === 1 ? "#fafcfd" : "#ffffff",
                       borderBottom: "1px solid #f1f5f9",
+                      breakInside: "avoid",
+                      pageBreakInside: "avoid",
                     }}
                   >
-                    <td className="py-2 px-2.5 text-center text-slate-400 font-semibold align-top text-[9.5px]">
+                    <td className={`text-center text-slate-400 font-semibold align-top ${isCompact ? "py-1 px-2 text-[8.5px]" : "py-2 px-2.5 text-[9.5px]"}`}>
                       {String(seq).padStart(2, "0")}
                     </td>
                     <td
-                      className="py-2 px-2.5 text-center font-extrabold text-slate-900 align-top"
+                      className={`text-center font-extrabold text-slate-900 align-top ${isCompact ? "py-1 px-2" : "py-2 px-2.5"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.quantity}
                     </td>
-                    <td className="py-2 px-3 text-slate-800 align-top pr-4">
+                    <td className={`text-slate-800 align-top pr-3 ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}>
                       <p className="font-bold text-slate-900 leading-snug">
                         {item.description.split("\n")[0]}
                       </p>
                       {item.description.includes("\n") && (
-                        <p className="text-[9px] text-slate-500 mt-0.5 whitespace-pre-wrap leading-normal font-normal">
+                        <p className={`text-slate-500 whitespace-pre-wrap leading-tight font-normal ${isCompact ? "text-[8px] mt-0.5" : "text-[9px] mt-0.5"}`}>
                           {item.description.split("\n").slice(1).join("\n")}
                         </p>
                       )}
                     </td>
                     <td
-                      className="py-2 px-3 text-right font-medium text-slate-600 align-top"
+                      className={`text-right font-medium text-slate-600 align-top ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.rate.toLocaleString("en-PK")}
                     </td>
                     <td
-                      className="py-2 px-3 text-right font-bold text-slate-900 align-top"
+                      className={`text-right font-bold text-slate-900 align-top ${isCompact ? "py-1 px-2.5" : "py-2 px-3"}`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {item.amount.toLocaleString("en-PK")}
@@ -435,14 +471,14 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
       </div>
 
       {/* 5. Bottom Split: Terms & Signatures + Totals */}
-      <div className="grid grid-cols-12 gap-3 mt-3 flex-1 items-start">
+      <div className={`grid grid-cols-12 gap-2.5 ${isCompact ? "mt-2" : "mt-3"} flex-1 items-start print-keep-together quotation-break-avoid`} style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
         <div className="col-span-7 flex flex-col justify-between h-full">
           <div>
-            <div style={cardStyle} className="p-3">
-              <p className={labelCls} style={{ color: "#1e40af" }}>
+            <div style={cardStyle} className={isCompact ? "p-2" : "p-3"}>
+              <p className={labelCls} style={{ color: "#1e40af", marginBottom: isCompact ? "2px" : "6px" }}>
                 Terms of Proposal &amp; Conditions
               </p>
-              <p className="text-slate-600 text-[9.5px] leading-[1.5] whitespace-pre-wrap">
+              <p className={`text-slate-600 whitespace-pre-wrap ${isCompact ? "text-[8.5px] leading-[1.35]" : "text-[9.5px] leading-[1.5]"}`}>
                 {quotation.notes ||
                   settings?.defaultNotes ||
                   "1. Quoted prices are valid for 7 days from issue.\n2. Delivery & completion timeline commences upon receipt of advance order confirmation.\n3. Goods remain the property of Dani Brothers until fully invoiced and settled."}
@@ -450,31 +486,31 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
             </div>
           </div>
 
-          <div className="pt-6 mt-auto">
+          <div className={`${isCompact ? "pt-3" : "pt-6"} mt-auto`}>
             <div className="flex justify-between items-end gap-6">
-              <div className="w-40 text-center flex flex-col items-center">
+              <div className="w-36 text-center flex flex-col items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={settings?.logo || "/logodanibro.svg"}
                   alt="Company stamp/logo"
-                  style={{ maxHeight: "24px", width: "auto", objectFit: "contain", marginBottom: "4px" }}
+                  style={{ maxHeight: isCompact ? "20px" : "24px", width: "auto", objectFit: "contain", marginBottom: "3px" }}
                 />
-                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1.5">
-                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%" }} className="pt-1">
+                  <p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                     Dani Brothers
                   </p>
-                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                  <p className="text-[7px] text-slate-400 uppercase tracking-wider">
                     Prepared By
                   </p>
                 </div>
               </div>
 
-              <div className="w-36 text-center">
-                <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1.5">
-                  <p className="text-[8.5px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
+              <div className="w-32 text-center">
+                <div style={{ borderTop: "1.5px solid #cbd5e1" }} className="pt-1">
+                  <p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-slate-700">
                     Client Approval
                   </p>
-                  <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">
+                  <p className="text-[7px] text-slate-400 uppercase tracking-wider">
                     Authorized Acceptance
                   </p>
                 </div>
@@ -487,17 +523,17 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
           <div
             style={{
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "8px",
               overflow: "hidden",
               backgroundColor: "#ffffff",
             }}
           >
-            <table className="w-full border-collapse text-[10px]">
+            <table className={`w-full border-collapse ${isCompact ? "text-[9px]" : "text-[10px]"}`}>
               <tbody>
                 <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td className="py-1.5 px-3 text-slate-500 font-medium">Subtotal</td>
+                  <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-slate-500 font-medium`}>Subtotal</td>
                   <td
-                    className="py-1.5 px-3 text-right font-bold text-slate-800"
+                    className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-bold text-slate-800`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(quotation.subtotal, currency)}
@@ -506,9 +542,9 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
 
                 {quotation.discount > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#fff1f2" }}>
-                    <td className="py-1.5 px-3 text-rose-700 font-semibold">Special Discount</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-rose-700 font-semibold`}>Special Discount</td>
                     <td
-                      className="py-1.5 px-3 text-right font-extrabold text-rose-700"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-extrabold text-rose-700`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       - {formatCurrency(quotation.discount, currency)}
@@ -518,9 +554,9 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
 
                 {(quotation.tax ?? 0) > 0 && (
                   <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td className="py-1.5 px-3 text-slate-500 font-medium">Estimated Tax / GST</td>
+                    <td className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-slate-500 font-medium`}>Estimated Tax / GST</td>
                     <td
-                      className="py-1.5 px-3 text-right font-semibold text-slate-800"
+                      className={`${isCompact ? "py-1 px-2.5" : "py-1.5 px-3"} text-right font-semibold text-slate-800`}
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       + {formatCurrency(quotation.tax || 0, currency)}
@@ -534,11 +570,11 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
                     color: "#ffffff",
                   }}
                 >
-                  <td className="py-2.5 px-3 uppercase tracking-[0.1em] text-[9.5px] font-extrabold">
+                  <td className={`${isCompact ? "py-1.5 px-2.5 text-[8.5px]" : "py-2.5 px-3 text-[9.5px]"} uppercase tracking-[0.1em] font-extrabold`}>
                     Total Estimate
                   </td>
                   <td
-                    className="py-2.5 px-3 text-right font-black text-[14px]"
+                    className={`${isCompact ? "py-1.5 px-2.5 text-[12.5px]" : "py-2.5 px-3 text-[14px]"} text-right font-black`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {formatCurrency(quotation.total, currency)}
@@ -548,7 +584,7 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
             </table>
           </div>
 
-          <p className="text-[8px] text-slate-400 mt-1.5 text-right uppercase tracking-[0.14em] font-bold">
+          <p className="text-[7.5px] text-slate-400 mt-1 text-right uppercase tracking-[0.14em] font-bold">
             Amounts shown in {currency}
           </p>
         </div>
@@ -556,8 +592,8 @@ export const QuotationPDFTemplate: React.FC<QuotationPDFTemplateProps> = ({
 
       {/* 6. Footer */}
       <footer
-        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400"
-        style={{ borderTop: "1px solid #f1f5f9" }}
+        className="mt-3 pt-2 text-center text-[8.5px] leading-relaxed text-slate-400 print-footer quotation-break-avoid"
+        style={{ borderTop: "1px solid #f1f5f9", breakInside: "avoid", pageBreakInside: "avoid" }}
       >
         <p>
           {settings?.footerText || "This is a computer-generated quotation."}
